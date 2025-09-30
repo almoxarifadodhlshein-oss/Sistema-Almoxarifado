@@ -11,7 +11,7 @@ def enviar_email_smtp(assunto, corpo_html, destinatario):
     """
     try:
         remetente = st.secrets["email_remetente"]
-        senha = st.secrets["senha_app_remetente"]
+        senha = st.secrets["senha_remetente"]
 
         msg = MIMEMultipart()
         msg['From'] = remetente
@@ -361,4 +361,5 @@ def enviar_email_coordenador(coordenador, email):
         return enviar_email_smtp(assunto, corpo_html, destinatario)
 
     except Exception as exc:
+
         return False, f"Erro ao preparar o e-mail de cadastro do coordenador: {exc}"
