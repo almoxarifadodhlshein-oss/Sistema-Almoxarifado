@@ -122,7 +122,7 @@ def render_form_devolucao_avulsa():
         key=f"devolucao_avulsa_num_itens"
     )
 
-    with st.form(key=form_key, clear_on_submit=True):
+    with st.form("devolucao_avulsa_form", clear_on_submit=True):
         cpf = st.text_input("CPF", key=f"devolucao_avulsa_cpf")
         coordenador = st.text_input("Coordenador", key=f"devolucao_avulsa_coordenador")
         colaborador = st.text_input("Colaborador que está devolvendo", key=f"devolucao_avulsa_colaborador")
@@ -169,7 +169,7 @@ def render_form_devolucao_avulsa():
         colaborador_val = st.session_state.get(f"devolucao_avulsa_colaborador", "")
         cpf_val = st.session_state.get(f"devolucao_avulsa_cpf", "")
         coordenador_val = st.session_state.get(f"devolucao_avulsa_coordenador", "")
-        email_val = st.session_state.get(f"devolucao_avulsa_email", "")
+        email_val = st.session_state.get(f"devolucao_avulsa_email_coordenador", "")
         responsavel_val = st.session_state.get(f"devolucao_avulsa_responsavel", "")
         turno_val = st.session_state.get(f"devolucao_avulsa_turno", "")
         cc_val = st.session_state.get(f"devolucao_avulsa_cc", "")
@@ -210,7 +210,7 @@ def render_form_devolucao_avulsa():
                 colaborador=colaborador_val,
                 responsavel=responsavel_val,
                 email_coordenador=email_val,
-                itens=itens_final,
+                itens_saida=itens_final,
                 centro_de_custo=cc_val,
                 turno=turno_val,
                 motivo=motivo_val,

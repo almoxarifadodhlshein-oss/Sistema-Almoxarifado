@@ -146,9 +146,15 @@ def carregar():
 
         # Registro no banco de dados de empréstimos
         ok, err = registrar_emprestimo(
-            cpf=cpf_value, coordenador=coordenador_value, colaborador=colaborador_value,
-            responsavel=responsavel_value, email_coordenador=email_value,
-            turno=turno_value, centro_de_custo=centro_value, status_item=status_item_value, itens=itens_final
+            cpf=cpf_value, 
+            coordenador=coordenador_value, 
+            colaborador=colaborador_value,
+            responsavel=responsavel_value, 
+            email_coordenador=email_value,
+            turno=turno_value, 
+            centro_de_custo=centro_value, 
+            status_item=status_item_value, 
+            itens_saida=itens_final
         )
 
         if not ok: st.error(f"Erro ao salvar no banco: {err}"); return

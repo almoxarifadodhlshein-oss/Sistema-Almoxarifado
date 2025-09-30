@@ -166,9 +166,14 @@ def carregar():
         # Envio de e-mail
         try:
             sucesso, msg = enviar_email_saida_epi(
-                cpf=cpf_value, coordenador=coordenador_value, colaborador=colaborador_value,
-                responsavel=responsavel_value, email_coordenador=email_value,
-                turno=turno_value, centro_de_custo=centro_value, itens=itens_final
+                cpf=cpf_value, 
+                coordenador=coordenador_value, 
+                colaborador=colaborador_value,
+                responsavel=responsavel_value, 
+                email_coordenador=email_value,
+                turno=turno_value, 
+                centro_de_custo=centro_value, 
+                itens_saida=itens_final
             )
             if sucesso: st.info(f"📧 {msg}")
             else: st.warning(f"Saída salva, mas e-mail não enviado: {msg}")

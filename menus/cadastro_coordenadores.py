@@ -1,41 +1,32 @@
-# menus/cadastro_coordenadores.py
-import os
+# Em menus/cadastro_coordenadores.py (VERSÃO FINAL)
+
 import time
 import streamlit as st
-from sqlalchemy import text
-from utils.db_connection import connect_db
 import pandas as pd
 from datetime import datetime
+
+# Importações necessárias para o novo padrão
+from sqlalchemy import text
+from utils.db_connection import connect_db
 from email_utils import enviar_email_coordenador
 
-DB_DIR = os.path.join(os.getcwd(), "banco de dados")
-os.makedirs(DB_DIR, exist_ok=True)
-DB_PATH = os.path.join(DB_DIR, "coordenadores.db")
-
+# --- FUNÇÕES DE ACESSO AO BANCO DE DADOS (JÁ CORRIGIDAS PARA POSTGRESQL) ---
 
 def _get_coordenadores():
-    """
-    Função robusta para ler e-mails cadastrados do PostgreSQL.
-    """
-    engine = connect_db() # Usa a nova conexão
-    try:
-        with engine.connect() as conn:
-            # Envolve a query com text()
-            df = pd.read_sql_query(text("SELECT email FROM coordenadores ORDER BY email"), conn)
-        return df['email'].tolist()
-    except Exception as e:
-        # Se a tabela ainda não existe, não é um erro crítico.
-        # O 'str(e)' vai mostrar o erro no console se algo mais sério acontecer.
-        # st.warning(f"Ainda não há coordenadores cadastrados. {str(e)}")
-        return []
-
-def registrar_coordenador(coordenador, email, data_cadastro):
+    """Lê e-mails cadastrados do PostgreSQL."""
     engine = connect_db()
     try:
         with engine.connect() as conn:
-            # 2. NÃO USAMOS MAIS O 'cursor'. A conexão executa diretamente.
-            
-            # 3. MUDAMOS a sintaxe para SERIAL PRIMARY KEY do PostgreSQL
+            df = pd.read_sql_query(text("SELECT email FROM coordenadores ORDER BY email"), conn)
+        return df['email'].tolist()
+    except Exception:
+        return []
+
+def registrar_coordenador(coordenador, email, data_cadastro):
+    """Registra um novo coordenador no PostgreSQL."""
+    engine = connect_db()
+    try:
+        with engine.connect() as conn:
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS coordenadores (
                     id SERIAL PRIMARY KEY,
@@ -44,80 +35,64 @@ def registrar_coordenador(coordenador, email, data_cadastro):
                     data_cadastro TEXT
                 )
             """))
-            
-            # 4. USAMOS parâmetros nomeados (ex: :coord) para mais clareza e segurança
-            query = text("""
-                INSERT INTO coordenadores (coordenador, email, data_cadastro)
-                VALUES (:coord, :email, :data)
-            """)
-            conn.execute(query, {
-                "coord": coordenador.strip().upper(),
-                "email": email.strip(),
-                "data": data_cadastro
-            })
-            conn.commit() # Commit para salvar as alterações
+            query = text("INSERT INTO coordenadores (coordenador, email, data_cadastro) VALUES (:coord, :email, :data)")
+            conn.execute(query, {"coord": coordenador.strip().upper(), "email": email.strip(), "data": data_cadastro})
+            conn.commit()
         return True, None
     except Exception as exc:
         if "duplicate key value violates unique constraint" in str(exc):
             return False, f"O e-mail '{email}' já está cadastrado."
         return False, str(exc)
 
-
-def _safe_rerun():
-    if hasattr(st, "rerun"):
-        st.rerun()
-
+# --- FUNÇÃO PRINCIPAL DA PÁGINA ---
 
 def carregar():
-    st.subheader("📝 Cadastro de Emails")
+    st.subheader("📝 Cadastro de Coordenadores")
 
-    form_key = f"coordenadores_form"
-
-    with st.form(key=form_key, clear_on_submit=True):
-        coordenador = st.text_input("Nome do Coordenador", key=f"coordenador")
-        email = st.text_input("E-mail do Coordenador", key=f"email")
-        
+    # 1. O formulário agora tem uma chave estática e 'clear_on_submit=True'
+    with st.form("coordenador_form", clear_on_submit=True):
+        coordenador = st.text_input("Nome do Coordenador", key="coord_nome")
+        email = st.text_input("E-mail do Coordenador", key="coord_email")
         enviar = st.form_submit_button("Cadastrar Coordenador")
 
+    # 2. A lógica de processamento fica FORA do 'with st.form'
     if enviar:
-        coordenador_value = st.session_state.get(f"coordenador", "")
-        email_value = st.session_state.get(f"email", "")
+        coordenador_value = st.session_state.get("coord_nome", "")
+        email_value = st.session_state.get("coord_email", "")
 
-        if not coordenador_value or not email_value:
-            st.error("Por favor, preencha o nome do coordenador e o e-mail.")
-            return
-
-        if "@" not in email_value:
-            st.error("Por favor, insira um e-mail válido.")
+        if not coordenador_value or not email_value or "@" not in email_value:
+            st.error("Por favor, preencha um nome e um e-mail válidos.")
             return
 
         data_cadastro = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
         ok, err = registrar_coordenador(coordenador_value, email_value, data_cadastro)
 
         if not ok:
-            st.error(f"Erro ao salvar no banco de dados: {err}")
+            st.error(f"Erro ao salvar: {err}")
             return
+        
+        st.success("✅ Coordenador cadastrado com sucesso!")
 
         try:
-            sucesso, msg = enviar_email_coordenador(coordenador_value, email_value)
-            if not sucesso:
-                st.warning(f"E-mail não pôde ser preparado: {msg}")
+            sucesso_email, msg_email = enviar_email_coordenador(coordenador_value, email_value)
+            if sucesso_email:
+                st.info(f"📧 {msg_email}")
             else:
-                st.info("📧 E-mail preparado (janela do Outlook aberta).")
-        except Exception as exc:
-            st.warning(f"Erro ao preparar e-mail: {exc}")
-
-        st.success("✅ Coordenador cadastrado com sucesso!")
-        time.sleep(3)
+                st.warning(f"Coordenador salvo, mas o e-mail não pôde ser enviado: {msg_email}")
+        except Exception as e:
+            st.warning(f"Coordenador salvo, mas ocorreu um erro ao preparar o e-mail: {e}")
+        
+        time.sleep(2)
+        # 3. 'st.rerun()' é usado para recarregar a lista de coordenadores abaixo
         st.rerun()
 
     st.markdown("---")
     
     st.subheader("📧 Coordenadores Cadastrados")
-    coordenadores = _get_coordenadores()
+    coordenadores_cadastrados = _get_coordenadores()
     
-    if not coordenadores:
+    if not coordenadores_cadastrados:
         st.info("Nenhum e-mail de coordenador cadastrado ainda.")
     else:
-        st.write(pd.DataFrame({"E-mail": coordenadores}))
+        # Usamos st.dataframe para uma melhor visualização
+        st.dataframe(pd.DataFrame({"E-mails Cadastrados": coordenadores_cadastrados}), use_container_width=True)
