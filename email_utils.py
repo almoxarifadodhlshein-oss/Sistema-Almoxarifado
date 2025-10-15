@@ -7,10 +7,12 @@ from datetime import datetime
 
 def enviar_email_smtp(assunto, corpo_html, destinatario):
     """
-    Função para enviar e-mails usando um servidor SMTP com modo de depuração.
+    Função para enviar e-mails usando o servidor SMTP do Gmail.
+    Esta função funciona perfeitamente na nuvem.
     """
     try:
         remetente = st.secrets["email_remetente"]
+        # A chave da senha aqui pode ser o que você preferir, mas vamos padronizar
         senha = st.secrets["senha_remetente"]
 
         msg = MIMEMultipart()
@@ -19,24 +21,15 @@ def enviar_email_smtp(assunto, corpo_html, destinatario):
         msg['Subject'] = assunto
         msg.attach(MIMEText(corpo_html, 'html'))
 
-        print("--- INICIANDO ENVIO DE E-MAIL ---")
-        print(f"De: {remetente}")
-        print(f"Para: {destinatario}")
-        print("DEBUG: Conectando ao servidor smtp.gmail.com:465...")
-
-        # --- Bloco de Conexão Corrigido para Office 365 ---
-        server = smtplib.SMTP('smtp.office365.com', 587)
-        server.starttls()  # Inicia a criptografia (TLS)
-        server.login(remetente, senha)
-        server.send_message(msg)
-        server.quit()
+        # --- Bloco de Conexão Corrigido para o GMAIL ---
+        # Conecta-se ao servidor SMTP do Gmail na porta 465 com SSL
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(remetente, senha)
+            server.send_message(msg)
         # --- Fim do Bloco Corrigido ---
-
-        return True, "E-mail processado com sucesso (sem erros no Python)."
-
+        
+        return True, "E-mail enviado com sucesso."
     except Exception as e:
-        print(f"!!!!!!!!!! DEBUG: OCORREU UM ERRO !!!!!!!!!!")
-        print(e)
         return False, f"Falha ao enviar e-mail via SMTP: {e}"
 
 
