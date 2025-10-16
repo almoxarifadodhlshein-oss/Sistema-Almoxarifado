@@ -167,12 +167,13 @@ def carregar():
                 email_coordenador=email_value,
                 turno=turno_value, 
                 centro_de_custo=centro_value, 
-                itens_saida=itens_final
+                itens=itens_final
             )
             if sucesso: st.info(f"📧 {msg}")
             else: st.warning(f"Saída salva, mas e-mail não enviado: {msg}")
         except Exception as exc:
             st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
-        time.sleep(4)
+        time.sleep(5)
+
         st.rerun()
