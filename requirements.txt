@@ -34,6 +34,7 @@ pydeck==0.9.1
 PyJWT==2.10.1
 python-dateutil==2.9.0.post0
 pytz==2025.2
+pywin32==311
 PyYAML==6.0.2
 referencing==0.36.2
 requests==2.32.4
@@ -41,7 +42,7 @@ rpds-py==0.27.0
 six==1.17.0
 smmap==5.0.2
 SQLAlchemy==2.0.43
-streamlit
+streamlit @ file:///C:/Users/gustavd2/OneDrive%20-%20DPDHL/Desktop/Sistema%20Almoxarifado/streamlit-1.48.0-py3-none-any.whl#sha256=0f2bc697a1a4d2199384d8bb3966aa0b25904c9345e6d6ad6fbb69bd284c03a2
 tenacity==9.1.2
 toml==0.10.2
 tornado==6.5.2
