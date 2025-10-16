@@ -154,7 +154,7 @@ def carregar():
             turno=turno_value, 
             centro_de_custo=centro_value, 
             status_item=status_item_value, 
-            itens_saida=itens_final
+            itens=itens_final
         )
 
         if not ok: st.error(f"Erro ao salvar no banco: {err}"); return
@@ -188,4 +188,5 @@ def carregar():
             st.warning(f"Empréstimo salvo, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
         time.sleep(2)
+
         st.rerun()
