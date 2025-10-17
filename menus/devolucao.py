@@ -129,7 +129,7 @@ def render_form_devolucao_avulsa():
         email_coordenador = st.selectbox(
             "E-mail do Coordenador", 
             options= [""] + coordenadores_emails,
-            key=f"devolucao_avulsa_email"
+            key=f"devolucao_avulsa_email_coordenador"
         )
         responsavel = st.selectbox(
             "Responsável",
@@ -354,3 +354,4 @@ def render_form_devolver_emprestimo():
                 st.session_state.devolucao_emprestimo_id = None
 
                 st.rerun()
+
