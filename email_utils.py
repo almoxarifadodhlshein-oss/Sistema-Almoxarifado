@@ -179,7 +179,7 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
         return False, f"Erro ao preparar o conteúdo do e-mail de saída de insumos: {exc}"
 
 
-def enviar_email_emprestimo(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status, centro_de_custo, turno=None):
+def enviar_email_emprestimo(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status, centro_de_custo, status_item, turno=None):
     try:
         if not email_coordenador or "@" not in email_coordenador:
             return False, "E-mail do coordenador inválido."
@@ -218,6 +218,7 @@ Brasil
           {turno_html}
           <b>Status:</b> {status}<br>
           <b>Centro de Custo:</b> {centro_de_custo}<br>
+          <b>Status do Item:</b> {status_item or '-'}<br>
           <b>Data:</b> {data_hora_str}<br><br>
 
           <table style="border-collapse:collapse;width:auto;font-size:11pt;">
@@ -354,4 +355,5 @@ def enviar_email_coordenador(coordenador, email):
         return enviar_email_smtp(assunto, corpo_html, destinatario)
 
     except Exception as exc:
+
         return False, f"Erro ao preparar o e-mail de cadastro do coordenador: {exc}"
