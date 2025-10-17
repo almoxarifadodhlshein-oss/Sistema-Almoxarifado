@@ -210,7 +210,7 @@ def render_form_devolucao_avulsa():
                 colaborador=colaborador_val,
                 responsavel=responsavel_val,
                 email_coordenador=email_val,
-                itens_saida=itens_final,
+                itens=itens_final,
                 centro_de_custo=cc_val,
                 turno=turno_val,
                 motivo=motivo_val,
@@ -352,4 +352,5 @@ def render_form_devolver_emprestimo():
         with col2_btn:
             if st.button("❌ Cancelar", use_container_width=True):
                 st.session_state.devolucao_emprestimo_id = None
+
                 st.rerun()
