@@ -177,16 +177,22 @@ def carregar():
         # Envio de e-mail
         try:
             sucesso, msg = enviar_email_emprestimo(
-                cpf=cpf_value, coordenador=coordenador_value, colaborador=colaborador_value,
-                responsavel=responsavel_value, email_coordenador=email_value,
-                turno=turno_value, status_item=status_item_value,
-                centro_de_custo=centro_value, itens=itens_final
+                cpf=cpf_value, 
+                coordenador=coordenador_value, 
+                colaborador=colaborador_value,
+                responsavel=responsavel_value, 
+                email_coordenador=email_value,
+                turno=turno_value, 
+                status_item=status_item_value,
+                centro_de_custo=centro_value, 
+                itens=itens_final
             )
             if sucesso: st.info(f"📧 {msg}")
             else: st.warning(f"Empréstimo salvo, mas e-mail não enviado: {msg}")
         except Exception as exc:
             st.warning(f"Empréstimo salvo, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
-        time.sleep(2)
+        time.sleep(5)
 
         st.rerun()
+
