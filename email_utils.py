@@ -246,7 +246,7 @@ Brasil
         return False, f"Erro ao preparar o conteúdo do e-mail de saída de insumos: {exc}"
                 
             
-def enviar_email_devolucao(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status, motivo, centro_de_custo, turno=None,):
+def enviar_email_devolucao(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status_item, motivo, centro_de_custo, turno=None,):
     try:
         if not email_coordenador or "@" not in email_coordenador:
             return False, "E-mail do coordenador inválido."
@@ -284,7 +284,7 @@ Brasil
           <p>Foi registrada a devolução para o colaborador <b>{(colaborador or '').upper()}</b>.</p>
           <b>Responsável:</b> {responsavel or '-'}<br>
           {turno_html}
-          <b>Status:</b> {status}<br>
+          <b>Status:</b> {status_item or '-'}<br>
           <b>Motivo:</b> {motivo}<br>
           <b>Centro de Custo:</b> {centro_de_custo}<br>
           <b>Data:</b> {data_hora_str}<br><br>
@@ -356,6 +356,7 @@ def enviar_email_coordenador(coordenador, email):
     except Exception as exc:
 
         return False, f"Erro ao preparar o e-mail de cadastro do coordenador: {exc}"
+
 
 
 
