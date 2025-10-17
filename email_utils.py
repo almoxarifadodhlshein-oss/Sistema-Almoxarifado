@@ -216,7 +216,6 @@ Brasil
           <p>Foi registrado um empréstimo para o colaborador <b>{(colaborador or '').upper()}</b>.</p>
           <b>Responsável:</b> {responsavel or '-'}<br>
           {turno_html}
-          <b>Status:</b> {status}<br>
           <b>Centro de Custo:</b> {centro_de_custo}<br>
           <b>Status do Item:</b> {status_item or '-'}<br>
           <b>Data:</b> {data_hora_str}<br><br>
@@ -357,5 +356,6 @@ def enviar_email_coordenador(coordenador, email):
     except Exception as exc:
 
         return False, f"Erro ao preparar o e-mail de cadastro do coordenador: {exc}"
+
 
 
