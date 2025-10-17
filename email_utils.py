@@ -179,7 +179,7 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
         return False, f"Erro ao preparar o conteúdo do e-mail de saída de insumos: {exc}"
 
 
-def enviar_email_emprestimo(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status, centro_de_custo, status_item, turno=None):
+def enviar_email_emprestimo(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status_item, centro_de_custo, status_item, turno=None):
     try:
         if not email_coordenador or "@" not in email_coordenador:
             return False, "E-mail do coordenador inválido."
@@ -357,3 +357,4 @@ def enviar_email_coordenador(coordenador, email):
     except Exception as exc:
 
         return False, f"Erro ao preparar o e-mail de cadastro do coordenador: {exc}"
+
