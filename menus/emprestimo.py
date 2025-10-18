@@ -195,4 +195,3 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
-

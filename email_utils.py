@@ -4,6 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+import pytz
 
 def enviar_email_smtp(assunto, corpo_html, destinatario):
     """
@@ -47,8 +48,9 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
 
         # --- 1. Montagem do Conteúdo (Lógica que você já tinha) ---
         itens_saida = itens_saida or []
-        data_hora_obj = datetime.now()
-        data_hora_str = data_hora_obj.strftime("%d/%m/%Y %H:%M:%S")
+        fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+        data_hora_brasilia = datetime.now(fuso_horario_brasilia)
+        data_hora_str = data_hora_brasilia.strftime("%Y-%m-%d %H:%M:%S")
         
         endereco_texto = """
         DHL Supply Chain<br>
@@ -74,7 +76,6 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
         <div style="font-family:Calibri, Arial, sans-serif;font-size:11pt;color:#111;">
           <p>Olá <b>{(coordenador or '').upper()}</b>,</p>
           <p>Saída de EPI registrada para <b>{(colaborador or '').upper()}</b>.</p>
-          <b>CPF:</b> {cpf or '-'}<br>
           <b>Responsável:</b> {responsavel or '-'}<br>
           <b>Turno:</b> {turno or '-'}<br>
           <b>Centro de Custo:</b> {centro_de_custo or '-'}<br>
@@ -100,7 +101,8 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
         </div>
         """
         
-        assunto = f"Saída de EPI — {(colaborador or '').upper()} — {data_hora_obj.strftime('%d/%m/%Y')}"
+        data_formatada = data_hora_brasilia.strftime('%Y-%m-%d')
+        assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
         return enviar_email_smtp(assunto, corpo_html, email_coordenador)
@@ -118,8 +120,9 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
             return False, "E-mail do coordenador inválido."
 
         # --- 1. Montagem do Conteúdo (Lógica que você já tinha) ---
-        data_hora_obj = datetime.now()
-        data_hora_str = data_hora_obj.strftime("%d/%m/%Y %H:%M")
+        fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+        data_hora_brasilia = datetime.now(fuso_horario_brasilia)
+        data_hora_str = data_hora_brasilia.strftime("%Y-%m-%d %H:%M:%S")
         
         endereco_texto = """
         DHL Supply Chain<br>
@@ -147,7 +150,6 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
         <div style="font-family:Calibri, Arial, sans-serif;font-size:11pt;color:#111;">
           <p>Olá <b>{(coordenador or '').upper()}</b>,</p>
           <p>Foi registrada a saída de insumos para <b>{(colaborador or '').upper()}</b>.</p>
-          <b>CPF:</b> {cpf or '-'}<br>
           <b>Responsável:</b> {responsavel or '-'}<br>
           {turno_html}
           <b>Centro de Custo:</b> {centro_de_custo or '-'}<br>
@@ -170,7 +172,8 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
         </div>
         """
 
-        assunto = f"Saída de Insumos - {(colaborador or '').upper()} - {data_hora_obj.strftime('%d/%m/%Y')}"
+        data_formatada = data_hora_brasilia.strftime('%Y-%m-%d')
+        assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
         return enviar_email_smtp(assunto, corpo_html, email_coordenador)
@@ -185,8 +188,9 @@ def enviar_email_emprestimo(cpf, coordenador, colaborador, responsavel, email_co
             return False, "E-mail do coordenador inválido."
 
         # --- 1. Montagem do Conteúdo (Lógica que você já tinha) ---
-        data_hora_obj = datetime.now()
-        data_hora_str = data_hora_obj.strftime("%d/%m/%Y %H:%M")
+        fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+        data_hora_brasilia = datetime.now(fuso_horario_brasilia)
+        data_hora_str = data_hora_brasilia.strftime("%Y-%m-%d %H:%M:%S")
 
         endereco_texto = """
 DHL Supply Chain<br>
@@ -237,7 +241,8 @@ Brasil
           <p><b>{endereco_texto}</b></p>
         </div>
         """
-        assunto = f"Empréstimo - {(colaborador or '').upper()} - {data_hora_obj.strftime('%d/%m/%Y')}"
+        data_formatada = data_hora_brasilia.strftime('%Y-%m-%d')
+        assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
         return enviar_email_smtp(assunto, corpo_html, email_coordenador)
@@ -252,8 +257,9 @@ def enviar_email_devolucao(cpf, coordenador, colaborador, responsavel, email_coo
             return False, "E-mail do coordenador inválido."
 
         # --- 1. Montagem do Conteúdo (Lógica que você já tinha) ---
-        data_hora_obj = datetime.now()
-        data_hora_str = data_hora_obj.strftime("%d/%m/%Y %H:%M")
+        fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+        data_hora_brasilia = datetime.now(fuso_horario_brasilia)
+        data_hora_str = data_hora_brasilia.strftime("%Y-%m-%d %H:%M:%S")
 
         endereco_texto = """
 DHL Supply Chain<br>
@@ -307,7 +313,8 @@ Brasil
         </div>
         """
 
-        assunto = f"Devolução - {(colaborador or '').upper()} - {data_hora_obj.strftime('%d/%m/%Y')}"
+        data_formatada = data_hora_brasilia.strftime('%Y-%m-%d')
+        assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
         return enviar_email_smtp(assunto, corpo_html, email_coordenador)
@@ -322,8 +329,9 @@ def enviar_email_coordenador(coordenador, email):
     """
     try:
         # --- 1. Montagem do Conteúdo ---
-        data_hora_obj = datetime.now()
-        data_hora_str = data_hora_obj.strftime("%d/%m/%Y %H:%M:%S")
+        fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+        data_hora_brasilia = datetime.now(fuso_horario_brasilia)
+        data_hora_str = data_hora_brasilia.strftime("%Y-%m-%d %H:%M:%S")
 
         endereco_texto = """
         DHL Supply Chain<br>
@@ -356,8 +364,3 @@ def enviar_email_coordenador(coordenador, email):
     except Exception as exc:
 
         return False, f"Erro ao preparar o e-mail de cadastro do coordenador: {exc}"
-
-
-
-
-

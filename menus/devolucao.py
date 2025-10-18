@@ -354,4 +354,3 @@ def render_form_devolver_emprestimo():
                 st.session_state.devolucao_emprestimo_id = None
 
                 st.rerun()
-
