@@ -173,7 +173,7 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
         """
 
         data_formatada = data_hora_brasilia.strftime('%Y-%m-%d')
-        assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
+        assunto = f"Saída de Insumos – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
         return enviar_email_smtp(assunto, corpo_html, email_coordenador)
@@ -242,7 +242,7 @@ Brasil
         </div>
         """
         data_formatada = data_hora_brasilia.strftime('%Y-%m-%d')
-        assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
+        assunto = f"Empréstimo de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
         return enviar_email_smtp(assunto, corpo_html, email_coordenador)
@@ -314,7 +314,7 @@ Brasil
         """
 
         data_formatada = data_hora_brasilia.strftime('%Y-%m-%d')
-        assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
+        assunto = f"Devolução de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
         return enviar_email_smtp(assunto, corpo_html, email_coordenador)
