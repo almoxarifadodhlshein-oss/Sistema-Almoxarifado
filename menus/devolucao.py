@@ -244,6 +244,7 @@ def render_form_devolucao_avulsa():
             st.success("Devolução para descarte registrada com sucesso! O estoque não foi alterado.")
 
         time.sleep(4)
+        st.rerun()
         
 
 # Em menus/devolucao.py

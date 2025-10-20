@@ -4,6 +4,7 @@ import time
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from utils.coordenadores_db import remove_coordenador_by_email
 
 # Importações necessárias para o novo padrão
 from sqlalchemy import text
@@ -47,15 +48,15 @@ def registrar_coordenador(coordenador, email, data_cadastro):
 # --- FUNÇÃO PRINCIPAL DA PÁGINA ---
 
 def carregar():
-    st.subheader("📝 Cadastro de Coordenadores")
+    st.subheader("📝 Cadastro e Gestão de Coordenadores")
 
-    # 1. O formulário agora tem uma chave estática e 'clear_on_submit=True'
+    # --- Formulário de Cadastro ---
     with st.form("coordenador_form", clear_on_submit=True):
         coordenador = st.text_input("Nome do Coordenador", key="coord_nome")
         email = st.text_input("E-mail do Coordenador", key="coord_email")
         enviar = st.form_submit_button("Cadastrar Coordenador")
 
-    # 2. A lógica de processamento fica FORA do 'with st.form'
+    # Lógica de envio (fora do with)
     if enviar:
         coordenador_value = st.session_state.get("coord_nome", "")
         email_value = st.session_state.get("coord_email", "")
@@ -68,31 +69,52 @@ def carregar():
         ok, err = registrar_coordenador(coordenador_value, email_value, data_cadastro)
 
         if not ok:
-            st.error(f"Erro ao salvar: {err}")
-            return
-        
+            st.error(f"Erro ao salvar: {err}"); return
+
         st.success("✅ Coordenador cadastrado com sucesso!")
+
+        # Limpa o cache para que a lista seja atualizada
+        _get_coordenadores.clear() 
 
         try:
             sucesso_email, msg_email = enviar_email_coordenador(coordenador_value, email_value)
-            if sucesso_email:
-                st.info(f"📧 {msg_email}")
-            else:
-                st.warning(f"Coordenador salvo, mas o e-mail não pôde ser enviado: {msg_email}")
+            if sucesso_email: st.info(f"📧 {msg_email}")
+            else: st.warning(f"Coordenador salvo, mas e-mail não enviado: {msg_email}")
         except Exception as e:
             st.warning(f"Coordenador salvo, mas ocorreu um erro ao preparar o e-mail: {e}")
-        
-        time.sleep(2)
-        # 3. 'st.rerun()' é usado para recarregar a lista de coordenadores abaixo
+
+        time.sleep(4)
         st.rerun()
 
     st.markdown("---")
-    
+
+    # --- SEÇÃO DE VISUALIZAÇÃO E EXCLUSÃO (ATUALIZADA) ---
     st.subheader("📧 Coordenadores Cadastrados")
     coordenadores_cadastrados = _get_coordenadores()
-    
+
     if not coordenadores_cadastrados:
         st.info("Nenhum e-mail de coordenador cadastrado ainda.")
     else:
-        # Usamos st.dataframe para uma melhor visualização
-        st.dataframe(pd.DataFrame({"E-mails Cadastrados": coordenadores_cadastrados}), use_container_width=True)
+        # Transforma a lista em um DataFrame para exibir o nome e o email
+        engine = connect_db()
+        try:
+            with engine.connect() as conn:
+                df_coords = pd.read_sql_query(text("SELECT coordenador, email FROM coordenadores ORDER BY coordenador"), conn)
+
+            # Exibe cada coordenador com um botão de remover
+            for index, row in df_coords.iterrows():
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    # Mostra o nome e o e-mail
+                    st.write(f"**{row['coordenador']}** ({row['email']})")
+                with col2:
+                    # Chave única para cada botão
+                    if st.button("Remover", key=f"remove_coord_{row['email']}"):
+                        ok_remove, msg_remove = remove_coordenador_by_email(row['email'])
+                        if ok_remove:
+                            st.success(f"Coordenador '{row['coordenador']}' removido.")
+                            st.rerun() # Recarrega para atualizar a lista
+                        else:
+                            st.error(f"Erro ao remover: {msg_remove}")
+        except Exception as e:
+            st.error(f"Erro ao carregar lista de coordenadores: {e}")

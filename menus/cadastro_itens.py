@@ -25,7 +25,7 @@ def carregar():
         ok, msg = add_item(categoria_val, nome_val)
         if ok:
             st.success("✅ Item adicionado com sucesso!")
-            time.sleep(1)
+            time.sleep(3)
             st.rerun()
         else:
             st.error(f"❌ Erro: {msg}")
