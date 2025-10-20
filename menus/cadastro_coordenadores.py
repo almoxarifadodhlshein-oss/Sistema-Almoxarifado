@@ -73,9 +73,6 @@ def carregar():
 
         st.success("✅ Coordenador cadastrado com sucesso!")
 
-        # Limpa o cache para que a lista seja atualizada
-        _get_coordenadores.clear() 
-
         try:
             sucesso_email, msg_email = enviar_email_coordenador(coordenador_value, email_value)
             if sucesso_email: st.info(f"📧 {msg_email}")
@@ -117,4 +114,5 @@ def carregar():
                         else:
                             st.error(f"Erro ao remover: {msg_remove}")
         except Exception as e:
+
             st.error(f"Erro ao carregar lista de coordenadores: {e}")
