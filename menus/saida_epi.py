@@ -90,7 +90,7 @@ def carregar():
         coordenador = st.text_input("Coordenador", key="saida_epi_coordenador")
         colaborador = st.text_input("Colaborador", key="saida_epi_colaborador")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key="saida_epi_email_coordenador")
-        responsavel = st.selectbox("Responsável", ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO", "RAFAEL CRISTOVÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="saida_epi_responsavel")
+        responsavel = st.selectbox("Responsável", ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="saida_epi_responsavel")
         turno = st.selectbox("Turno", ["ADM", "1° TURNO", "2° TURNO", "3° TURNO"], key="saida_epi_turno")
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key="saida_epi_centro_de_custo")
         motivo = st.selectbox("Motivo da Saída", ["PERDA", "1° RETIRADA", "AVARIADO", "ESQUECEU O EPI", "DEVOLUÇÃO", "TROCA DE TAMANHO", "PERÍODO VENCIDO", "MANCHA"], key="saida_epi_motivo")
@@ -140,10 +140,17 @@ def carregar():
         
         # Registro no banco de dados de saída
         ok, err = registrar_saida_epi(
-            colaborador=colaborador_value, cpf=cpf_value, coordenador=coordenador_value,
-            email_coordenador=email_value, responsavel=responsavel_value, motivo=motivo_value,
-            status=status_value, efetivo=efetivo_value, turno=turno_value,
-            centro_de_custo=centro_value, itens_saida=itens_final
+            colaborador=colaborador_value, 
+            cpf=cpf_value, 
+            coordenador=coordenador_value,
+            email_coordenador=email_value, 
+            responsavel=responsavel_value, 
+            motivo=motivo_value,
+            status=status_value, 
+            efetivo=efetivo_value, 
+            turno=turno_value,
+            centro_de_custo=centro_value, 
+            itens_saida=itens_final
         )
 
         if not ok: st.error(f"Erro ao salvar no banco de saídas: {err}"); return
@@ -173,6 +180,9 @@ def carregar():
                 email_coordenador=email_value,
                 turno=turno_value, 
                 centro_de_custo=centro_value, 
+                status=status_value,
+                motivo=motivo_value,
+                efetivo=efetivo_value,
                 itens_saida=itens_final
             )
             if sucesso: st.info(f"📧 {msg}")
@@ -181,5 +191,4 @@ def carregar():
             st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
         time.sleep(4)
-
         st.rerun()

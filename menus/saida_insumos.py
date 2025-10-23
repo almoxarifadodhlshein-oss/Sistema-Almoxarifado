@@ -92,7 +92,7 @@ def carregar():
         colaborador = st.text_input("Colaborador", key="saida_insumos_colaborador")
         coordenador = st.text_input("Coordenador", key="saida_insumos_coordenador")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key="saida_insumos_email_coordenador")
-        responsavel = st.selectbox("Responsável", ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO", "RAFAEL CRISTOVÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="saida_insumos_responsavel")
+        responsavel = st.selectbox("Responsável", ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="saida_insumos_responsavel")
         turno = st.selectbox("Turno", ["ADM", "1° TURNO", "2° TURNO", "3° TURNO"], key="saida_insumos_turno")
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key="saida_insumos_centro_de_custo")
 
@@ -148,7 +148,7 @@ def carregar():
         erros_estoque = []
         for nome, tam, qtd in itens_final:
             sucesso_estoque, msg_estoque = atualizar_estoque(
-                item_nome=nome, tamanho=tam, status="N/A", tipo="INSUMO",
+                item_nome=nome, tamanho=tam, status="NOVO", tipo="INSUMO",
                 quantidade_delta=-int(qtd)
             )
             if not sucesso_estoque:
@@ -175,6 +175,5 @@ def carregar():
             st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
         time.sleep(5)
-
 
         st.rerun()

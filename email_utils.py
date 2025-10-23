@@ -77,11 +77,11 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
           <p>Olá <b>{(coordenador or '').upper()}</b>,</p>
           <p>Saída de EPI registrada para <b>{(colaborador or '').upper()}</b>.</p>
           <b>Responsável:</b> {responsavel or '-'}<br>
-          <b>Turno:</b> {turno or '-'}<br>
-          <b>Centro de Custo:</b> {centro_de_custo or '-'}<br>
-          <b>Motivo:</b> {motivo or '-'}<br>
-          <b>Status:</b> {status or '-'}<br>
-          <b>Efetivo:</b> {efetivo or '-'}<br>
+          <b>Turno:</b> {turno}<br>
+          <b>Centro de Custo:</b> {centro_de_custo}<br>
+          <b>Motivo:</b> {motivo}<br>
+          <b>Status:</b> {status}<br>
+          <b>Efetivo:</b> {efetivo}<br>
           <b>Data:</b> {data_hora_str}<br><br>
 
           <table style="border-collapse:collapse;width:auto;font-size:11pt;">

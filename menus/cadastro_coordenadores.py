@@ -114,5 +114,4 @@ def carregar():
                         else:
                             st.error(f"Erro ao remover: {msg_remove}")
         except Exception as e:
-
             st.error(f"Erro ao carregar lista de coordenadores: {e}")
