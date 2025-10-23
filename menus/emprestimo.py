@@ -101,7 +101,7 @@ def carregar():
         colaborador = st.text_input("Colaborador", key="emprestimo_colaborador")
         coordenador = st.text_input("Coordenador", key="emprestimo_coordenador")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key="emprestimo_email_coordenador")
-        responsavel = st.selectbox("Responsável", ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="emprestimo_responsavel")
+        responsavel = st.selectbox("Responsável", ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO", "RAFAEL CRISTOVÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="emprestimo_responsavel")
         turno = st.selectbox("Turno", ["ADM", "1° TURNO", "2° TURNO", "3° TURNO"], key="emprestimo_turno")
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key="emprestimo_centro_de_custo")
         status_item = st.selectbox("Status dos Itens Emprestados", ["NOVO", "HIGIENIZADO"], key="emprestimo_status_item")
@@ -195,3 +195,4 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
