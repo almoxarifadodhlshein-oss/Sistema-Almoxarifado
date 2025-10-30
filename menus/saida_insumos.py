@@ -132,7 +132,11 @@ def carregar():
         if not centro_value: st.error("O campo 'Centro de Custo' é obrigatório."); return
         if not itens_final: st.error("Preencha pelo menos um insumo."); return
         if not email_value or email_value == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); return
-
+        if not centro_value: st.error("O campo 'Centro de Custo' é obrigatório."); return
+        if not cpf_value: st.error("Ocampo 'CPF' é obrigatório."); return
+        if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); return
+        if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório.") return
+        
         # Registro no banco de dados de saída
         ok, err = registrar_saida_insumos(
             cpf=cpf_value, coordenador=coordenador_value, colaborador=colaborador_value,
@@ -178,3 +182,4 @@ def carregar():
 
 
         st.rerun()
+
