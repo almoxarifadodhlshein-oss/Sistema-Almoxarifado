@@ -143,7 +143,11 @@ def carregar():
         if not centro_value: st.error("O campo 'Centro de Custo' é obrigatório."); return
         if not itens_final: st.error("Preencha pelo menos um item."); return
         if not email_value or email_value == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); return
-
+        if not cpf_value: st.error("Ocampo 'CPF' é obrigatório."); return
+        if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); return
+        if not status_value: st.error("O campo 'Status' é obrigatório."); return
+        if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório.") return
+        
         # Registro no banco de dados de empréstimos
         ok, err = registrar_emprestimo(
             cpf=cpf_value, 
@@ -195,4 +199,5 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
