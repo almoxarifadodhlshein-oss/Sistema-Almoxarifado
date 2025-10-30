@@ -140,7 +140,8 @@ def carregar():
         if not cpf_value: st.error("Ocampo 'CPF' é obrigatório."); return
         if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); return
         if not efetivo_value: st.error("O campo 'Efetivo' é obrigatório."); return
-        if not status_value: st.error("O campo 'Status' é obrigatório.') return
+        if not status_value: st.error("O campo 'Status' é obrigatório."); return
+        if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório.") return
         
         # Registro no banco de dados de saída
         ok, err = registrar_saida_epi(
@@ -197,4 +198,5 @@ def carregar():
         time.sleep(4)
 
         st.rerun()
+
 
