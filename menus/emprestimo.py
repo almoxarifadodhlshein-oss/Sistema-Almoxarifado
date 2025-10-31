@@ -146,7 +146,7 @@ def carregar():
         if not cpf_value: st.error("Ocampo 'CPF' é obrigatório."); return
         if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); return
         if not status_value: st.error("O campo 'Status' é obrigatório."); return
-        if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório.") return
+        if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); return
         
         # Registro no banco de dados de empréstimos
         ok, err = registrar_emprestimo(
@@ -199,5 +199,6 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
 
