@@ -135,7 +135,7 @@ def carregar():
         if not centro_value: st.error("O campo 'Centro de Custo' é obrigatório."); return
         if not cpf_value: st.error("Ocampo 'CPF' é obrigatório."); return
         if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); return
-        if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório.") return
+        if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); return
         
         # Registro no banco de dados de saída
         ok, err = registrar_saida_insumos(
@@ -182,4 +182,5 @@ def carregar():
 
 
         st.rerun()
+
 
