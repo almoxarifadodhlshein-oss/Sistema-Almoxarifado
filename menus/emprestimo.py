@@ -12,7 +12,7 @@ from utils.itens_db import listar_itens_por_categoria
 
 
 # Função para ler os e-mails cadastrados
-'''def _get_coordenadores():
+def _get_coordenadores():
     engine = connect_db()
     try:
         with engine.connect() as conn:
@@ -27,7 +27,7 @@ try:
 except Exception:
     def listar_itens(cat): return []
 
-DB_DIR = os.path.join(os.getcwd(), "banco de dados")
+'''DB_DIR = os.path.join(os.getcwd(), "banco de dados")
 os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, "emprestimo.db")'''
 
@@ -198,6 +198,7 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
 
 
