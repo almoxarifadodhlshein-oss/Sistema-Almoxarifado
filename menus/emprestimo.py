@@ -36,7 +36,16 @@ def registrar_emprestimo(cpf, coordenador, colaborador, responsavel, email_coord
     engine = connect_db()
     try:
         with engine.connect() as conn:
-            data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            data = datetime.now()
+            try:
+                import pytz
+                fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+                data = datetime.now(fuso_horario_brasilia)
+            except ImportError:
+                pass # Usa a hora do servidor se o pytz não estiver instalado
+
+            data_str = data.strftime("%Y-%m-%d %H:%M:%S")
+            
             # Sintaxe do PostgreSQL com SERIAL PRIMARY KEY
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS emprestimos (
@@ -198,6 +207,7 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
 
 
