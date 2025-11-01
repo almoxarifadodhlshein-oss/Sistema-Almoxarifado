@@ -37,13 +37,11 @@ def registrar_emprestimo(cpf, coordenador, colaborador, responsavel, email_coord
     engine = connect_db()
     try:
         with engine.connect() as conn:
-            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
-            data_atual_obj = datetime.now(fuso_horario_brasilia)
-            data_str = data_atual_obj.strftime("%Y-%m-%d %H:%M:%S")
+            
             try:
-                import pytz
                 fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
-                data = datetime.now(fuso_horario_brasilia)
+                data_atual_obj = datetime.now(fuso_horario_brasilia)
+                data_str = data_atual_obj.strftime("%Y-%m-%d %H:%M:%S")
             except ImportError:
                 pass # Usa a hora do servidor se o pytz não estiver instalado
 
@@ -210,6 +208,7 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
 
 
