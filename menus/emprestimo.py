@@ -3,6 +3,7 @@ import os
 import time
 import streamlit as st
 import pandas as pd
+import pytz
 from sqlalchemy import text
 from utils.db_connection import connect_db
 from datetime import datetime
@@ -207,6 +208,7 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
 
 
