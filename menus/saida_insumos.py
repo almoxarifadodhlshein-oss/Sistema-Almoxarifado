@@ -2,7 +2,7 @@
 import time
 import streamlit as st
 from datetime import datetime
-
+import pytz
 # 1. NOVAS IMPORTAÇÕES NECESSÁRIAS
 from sqlalchemy import text
 from utils.db_connection import connect_db
@@ -26,7 +26,9 @@ def registrar_saida_insumos(cpf, coordenador, colaborador, responsavel, email_co
     engine = connect_db()
     try:
         with engine.connect() as conn:
-            data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+            data_atual_obj = datetime.now(fuso_horario_brasilia)
+            data_str = data_atual_obj.strftime("%Y-%m-%d %H:%M:%S")
             # 2. SINTAXE DO CREATE TABLE AJUSTADA PARA POSTGRESQL
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS saida_insumos (
@@ -54,7 +56,7 @@ def registrar_saida_insumos(cpf, coordenador, colaborador, responsavel, email_co
                     VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :insumo, :qtd, :tam, :email)
                 """)
                 conn.execute(query, {
-                    "data": data_hora, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
+                    "data": data_str, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
                     "colab": colaborador.strip().upper(), "resp": responsavel.strip(), "turno": turno.strip(),
                     "cc": centro_de_custo.strip().upper(), "insumo": item.strip().upper(),
                     "qtd": int(quantidade), "tam": tamanho.strip().upper() if tamanho else "",
@@ -182,6 +184,7 @@ def carregar():
 
 
         st.rerun()
+
 
 
 
