@@ -91,8 +91,8 @@ def carregar():
     with st.form("saida_insumos_form", clear_on_submit=True):
         # Campos gerais do formulário
         cpf = st.text_input("CPF", key="saida_insumos_cpf")
-        colaborador = st.text_input("Colaborador", key="saida_insumos_colaborador")
         coordenador = st.text_input("Coordenador", key="saida_insumos_coordenador")
+        colaborador = st.text_input("Colaborador", key="saida_insumos_colaborador")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key="saida_insumos_email_coordenador")
         responsavel = st.selectbox("Responsável", ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO", "RAFAEL CRISTOVÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="saida_insumos_responsavel")
         turno = st.selectbox("Turno", ["ADM", "1° TURNO", "2° TURNO", "3° TURNO"], key="saida_insumos_turno")
@@ -184,6 +184,7 @@ def carregar():
 
 
         st.rerun()
+
 
 
 
