@@ -4,7 +4,7 @@ import time
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-
+import pytz
 # 1. NOVAS IMPORTAÇÕES NECESSÁRIAS
 from sqlalchemy import text
 from utils.db_connection import connect_db
@@ -59,7 +59,9 @@ def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, tu
     engine = connect_db()
     try:
         with engine.connect() as conn:
-            data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+            data_atual_obj = datetime.now(fuso_horario_brasilia)
+            data_str = data_atual_obj.strftime("%Y-%m-%d %H:%M:%S")
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS devolucoes (
                     id SERIAL PRIMARY KEY, data TEXT, cpf TEXT, coordenador TEXT, 
@@ -75,7 +77,7 @@ def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, tu
                     VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :motivo, :stat_item, :acao, :item, :qtd, :tam, :email)
                 """)
                 conn.execute(query, {
-                    "data": data, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
+                    "data": data_str, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
                     "colab": colaborador.strip().upper(), "resp": responsavel.strip(), "turno": turno.strip(),
                     "cc": centro_de_custo.strip().upper(), "motivo": motivo.strip(), "stat_item": status_item.strip(),
                     "acao": acao.strip(), "item": nome.strip().upper(), "qtd": int(qtd),
@@ -356,4 +358,5 @@ def render_form_devolver_emprestimo():
                 st.session_state.devolucao_emprestimo_id = None
 
                 st.rerun()
+
 
