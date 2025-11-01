@@ -3,7 +3,7 @@
 import time
 import streamlit as st
 from datetime import datetime
-
+import pytz
 # 1. NOVAS IMPORTAÇÕES NECESSÁRIAS
 from sqlalchemy import text
 from utils.db_connection import connect_db
@@ -19,7 +19,9 @@ def registrar_saida_epi(colaborador, cpf, coordenador, email_coordenador, respon
     engine = connect_db()
     try:
         with engine.connect() as conn:
-            data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+            data_atual_obj = datetime.now(fuso_horario_brasilia)
+            data_str = data_atual_obj.strftime("%Y-%m-%d %H:%M:%S")
             # 2. SINTAXE DO CREATE TABLE AJUSTADA PARA POSTGRESQL
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS saida_epis (
@@ -50,7 +52,7 @@ def registrar_saida_epi(colaborador, cpf, coordenador, email_coordenador, respon
                     VALUES (:data, :colab, :cpf, :coord, :email, :resp, :motivo, :status, :efetivo, :turno, :cc, :item, :tam, :qtd)
                 """)
                 conn.execute(query, {
-                    "data": data_hora, "colab": colaborador.strip().upper(), "cpf": cpf.strip(),
+                    "data": data_str, "colab": colaborador.strip().upper(), "cpf": cpf.strip(),
                     "coord": coordenador.strip().upper(), "email": email_coordenador.strip(),
                     "resp": responsavel.strip(), "motivo": motivo.strip(), "status": status.strip(),
                     "efetivo": efetivo.strip(), "turno": turno.strip(), "cc": centro_de_custo.strip().upper(),
@@ -198,6 +200,7 @@ def carregar():
         time.sleep(4)
 
         st.rerun()
+
 
 
 
