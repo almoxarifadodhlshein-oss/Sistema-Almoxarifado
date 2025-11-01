@@ -2,7 +2,6 @@
 import os
 import time
 import streamlit as st
-import sqlite3
 import pandas as pd
 from sqlalchemy import text
 from utils.db_connection import connect_db
@@ -13,7 +12,7 @@ from utils.itens_db import listar_itens_por_categoria
 
 
 # Função para ler os e-mails cadastrados
-def _get_coordenadores():
+'''def _get_coordenadores():
     engine = connect_db()
     try:
         with engine.connect() as conn:
@@ -30,7 +29,7 @@ except Exception:
 
 DB_DIR = os.path.join(os.getcwd(), "banco de dados")
 os.makedirs(DB_DIR, exist_ok=True)
-DB_PATH = os.path.join(DB_DIR, "emprestimo.db")
+DB_PATH = os.path.join(DB_DIR, "emprestimo.db")'''
 
 
 def registrar_emprestimo(cpf, coordenador, colaborador, responsavel, email_coordenador, turno, centro_de_custo, status_item, itens):
@@ -145,7 +144,7 @@ def carregar():
         if not email_value or email_value == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); return
         if not cpf_value: st.error("Ocampo 'CPF' é obrigatório."); return
         if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); return
-        if not status_value: st.error("O campo 'Status' é obrigatório."); return
+        if not status_item_value: st.error("O campo 'Status' é obrigatório."); return
         if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); return
         
         # Registro no banco de dados de empréstimos
@@ -199,6 +198,7 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
 
 
