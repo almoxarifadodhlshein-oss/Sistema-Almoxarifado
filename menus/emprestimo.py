@@ -61,7 +61,7 @@ def registrar_emprestimo(cpf, coordenador, colaborador, responsavel, email_coord
                     VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :stat_item, :stat_emp, :item, :qtd, :tam, :email)
                 """)
                 conn.execute(query, {
-                    "data": data, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
+                    "data": data_str, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
                     "colab": colaborador.strip().upper(), "resp": responsavel.strip(), "turno": turno.strip(),
                     "cc": centro_de_custo.strip().upper(), "stat_item": status_item.strip(),
                     "stat_emp": status_emprestimo, "item": nome.strip().upper(), "qtd": int(qtd),
@@ -202,6 +202,7 @@ def carregar():
         time.sleep(5)
 
         st.rerun()
+
 
 
 
