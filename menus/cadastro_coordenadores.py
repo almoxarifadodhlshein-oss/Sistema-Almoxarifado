@@ -50,7 +50,7 @@ def registrar_coordenador(coordenador, email, data_cadastro):
 def carregar():
     st.subheader("📝 Cadastro e Gestão de Coordenadores")
 
-    # --- Formulário de Cadastro ---
+    # --- Formulário de Cadastro (O SEU CÓDIGO, ESTÁ CORRETO) ---
     with st.form("coordenador_form", clear_on_submit=True):
         coordenador = st.text_input("Nome do Coordenador", key="coord_nome")
         email = st.text_input("E-mail do Coordenador", key="coord_email")
@@ -119,5 +119,6 @@ def carregar():
         except Exception as e:
 
             st.error(f"Erro ao carregar lista de coordenadores: {e}")
+
 
 
