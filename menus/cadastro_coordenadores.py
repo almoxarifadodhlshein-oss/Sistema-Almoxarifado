@@ -13,7 +13,7 @@ from email_utils import enviar_email_coordenador
 
 # --- FUNÇÕES DE ACESSO AO BANCO DE DADOS (JÁ CORRIGIDAS PARA POSTGRESQL) ---
 
-'''def _get_coordenadores():
+def _get_coordenadores():
     """Lê e-mails cadastrados do PostgreSQL."""
     engine = connect_db()
     try:
@@ -21,7 +21,7 @@ from email_utils import enviar_email_coordenador
             df = pd.read_sql_query(text("SELECT email FROM coordenadores ORDER BY email"), conn)
         return df['email'].tolist()
     except Exception:
-        return []'''
+        return []
 
 def registrar_coordenador(coordenador, email, data_cadastro):
     """Registra um novo coordenador no PostgreSQL."""
@@ -119,3 +119,4 @@ def carregar():
         except Exception as e:
 
             st.error(f"Erro ao carregar lista de coordenadores: {e}")
+
