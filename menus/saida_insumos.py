@@ -20,6 +20,22 @@ try:
 except Exception:
     def listar_itens(cat): return []
 
+def _get_coordenadores():
+    engine = connect_db()
+    try:
+        with engine.connect() as conn:
+            df = pd.read_sql_query(text("SELECT email FROM coordenadores ORDER BY email"), conn)
+        return df['email'].tolist() if not df.empty else ["Nenhum e-mail cadastrado"]
+    except Exception:
+        return ["Nenhum e-mail cadastrado"]
+
+try:
+    from utils.itens_db import init_items_db, listar_itens
+    init_items_db()
+except Exception:
+    def listar_itens(cat): return []
+
+
 
 def registrar_saida_insumos(cpf, coordenador, colaborador, responsavel, email_coordenador, turno, centro_de_custo, itens_saida):
     """Registra a saída de um ou mais insumos no banco de dados PostgreSQL."""
@@ -184,6 +200,7 @@ def carregar():
 
 
         st.rerun()
+
 
 
 
