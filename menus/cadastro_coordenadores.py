@@ -88,7 +88,7 @@ def carregar():
 
     # --- SEÇÃO DE VISUALIZAÇÃO E EXCLUSÃO (ATUALIZADA) ---
     st.subheader("📧 Coordenadores Cadastrados")
-    coordenadores_cadastrados = _get_coordenadores()
+    coordenadores_cadastrados = get_coordenadores()
 
     if not coordenadores_cadastrados:
         st.info("Nenhum e-mail de coordenador cadastrado ainda.")
@@ -119,6 +119,7 @@ def carregar():
         except Exception as e:
 
             st.error(f"Erro ao carregar lista de coordenadores: {e}")
+
 
 
 
