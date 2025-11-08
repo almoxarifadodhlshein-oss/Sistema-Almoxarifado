@@ -13,7 +13,7 @@ from email_utils import enviar_email_coordenador
 
 # --- FUNÇÕES DE ACESSO AO BANCO DE DADOS (JÁ CORRIGIDAS PARA POSTGRESQL) ---
 
-def _get_coordenadores():
+'''def _get_coordenadores():
     """Lê e-mails cadastrados do PostgreSQL."""
     engine = connect_db()
     try:
@@ -21,7 +21,7 @@ def _get_coordenadores():
             df = pd.read_sql_query(text("SELECT email FROM coordenadores ORDER BY email"), conn)
         return df['email'].tolist()
     except Exception:
-        return []
+        return []'''
 
 def registrar_coordenador(coordenador, email, data_cadastro):
     """Registra um novo coordenador no PostgreSQL."""
@@ -72,6 +72,7 @@ def carregar():
             st.error(f"Erro ao salvar: {err}"); return
 
         st.success("✅ Coordenador cadastrado com sucesso!")
+        get_coordenadores.clear()
 
         try:
             sucesso_email, msg_email = enviar_email_coordenador(coordenador_value, email_value)
@@ -95,6 +96,7 @@ def carregar():
         # Transforma a lista em um DataFrame para exibir o nome e o email
         engine = connect_db()
         try:
+            engine = connect_db()
             with engine.connect() as conn:
                 df_coords = pd.read_sql_query(text("SELECT coordenador, email FROM coordenadores ORDER BY coordenador"), conn)
 
@@ -110,8 +112,10 @@ def carregar():
                         ok_remove, msg_remove = remove_coordenador_by_email(row['email'])
                         if ok_remove:
                             st.success(f"Coordenador '{row['coordenador']}' removido.")
+                            get_coordenadores.clear()
                             st.rerun() # Recarrega para atualizar a lista
                         else:
                             st.error(f"Erro ao remover: {msg_remove}")
         except Exception as e:
+
             st.error(f"Erro ao carregar lista de coordenadores: {e}")
