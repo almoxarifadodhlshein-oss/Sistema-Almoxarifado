@@ -4,7 +4,7 @@ import time
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from utils.coordenadores_db import remove_coordenador_by_email
+from utils.coordenadores_db import get_coordenadores, remove_coordenador_by_email
 
 # Importações necessárias para o novo padrão
 from sqlalchemy import text
@@ -119,6 +119,7 @@ def carregar():
         except Exception as e:
 
             st.error(f"Erro ao carregar lista de coordenadores: {e}")
+
 
 
 
