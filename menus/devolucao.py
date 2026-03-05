@@ -135,7 +135,7 @@ def render_form_devolucao_avulsa():
         )
         responsavel = st.selectbox(
             "Responsável",
-            ["AMANDA MESSIAS", "ANDREZZA SABINO", "PAMELA SIMEÃO",
+            ["ANDREZZA SABINO", "PAMELA SIMEÃO",
              "RAFAEL CRISTOVÃO","SUELI BARBOSA", "ORLANDO ALVES", 
              "JOVEM APRENDIZ"],
             key=f"devolucao_avulsa_responsavel"
@@ -358,5 +358,6 @@ def render_form_devolver_emprestimo():
                 st.session_state.devolucao_emprestimo_id = None
 
                 st.rerun()
+
 
 
