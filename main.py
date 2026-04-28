@@ -234,7 +234,7 @@ else:
     }
 
     if st.session_state.user_role in ["visitante"]:
-        allowed = {"📤 Saída de EPIs", "📦 Saída de Insumos", "🤝 Empréstimos", "🔄 Devoluções"}
+        allowed = {"📤 Saída de EPIs", "📦 Saída de Insumos", "🤝 Empréstimos"}
         PAGES = {k: v for k, v in PAGES.items() if k in allowed}
 
     selection = st.sidebar.radio("Navegar", list(PAGES.keys()), label_visibility="collapsed")
