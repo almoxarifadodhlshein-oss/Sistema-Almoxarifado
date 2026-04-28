@@ -32,14 +32,14 @@ def init_estoque_db():
         st.error(f"ERRO CRÍTICO AO INICIALIZAR A TABELA 'estoque': {e}")
         st.stop()
 
-@st.cache_data
+@st.cache_data(ttl=60)
 def get_estoque_atual():
     """Retorna o DataFrame completo do estoque atual do PostgreSQL."""
     init_estoque_db() # Garante que a tabela exista antes de ler
     engine = connect_db()
     with engine.connect() as conn:
         df = pd.read_sql_query(
-            text("SELECT item_nome, tamanho, status, fornecedor, quantidade, valor_unitario, tipo, data_ultima_atualizacao FROM estoque ORDER BY item_nome, tamanho, status"),
+            text("SELECT id, item_nome, tamanho, status, fornecedor, quantidade, valor_unitario, tipo, data_ultima_atualizacao FROM estoque ORDER BY item_nome, tamanho, status"),
             conn
         )
     return df

@@ -2,8 +2,11 @@
 
 import streamlit as st
 import pandas as pd
+import time
 import io
 from datetime import datetime
+from sqlalchemy import text
+from utils.db_connection import connect_db
 # A única função de DB que esta tela precisa é a que busca o estoque
 from utils.estoque_db import get_estoque_atual
 
@@ -97,22 +100,76 @@ def carregar():
 
     # --- Exibição dos resultados e Exportação (continua igual) ---
     st.markdown(f"**Itens encontrados:** {len(df_filtrado)}")
-    st.dataframe(df_filtrado, use_container_width=True,
-                 column_config={
-                     "valor_unitario": st.column_config.NumberColumn("Valor Unitário (R$)", format="R$ %.2f"),
-                     "valor_total": st.column_config.NumberColumn("Valor Total (R$)", format="R$ %.2f")
-                 })
+    
+    # 1. Trocamos st.dataframe por st.data_editor
+    # A chave (key) permite que o Streamlit grave exatamente o que foi alterado
+    df_editado = st.data_editor(
+        df_filtrado,
+        use_container_width=True,
+        num_rows="dynamic", # Libera a lixeira para excluir linhas
+        key="editor_estoque",
+        column_config={
+            "id": st.column_config.TextColumn("ID", disabled=True), # O ID não pode ser editado
+            "valor_unitario": st.column_config.NumberColumn("Valor Unitário (R$)", format="R$ %.2f"),
+            "valor_total": st.column_config.NumberColumn("Valor Total (R$)", format="R$ %.2f", disabled=True)
+        }
+    )
     
     st.write("")
+    
+    # 2. Lógica para processar as edições e enviar ao PostgreSQL
+    if st.button("💾 Salvar Alterações no Banco", type="primary"):
+        # Puxa o dicionário de rastreio de edições do Streamlit
+        alteracoes = st.session_state["editor_estoque"]
+        
+        # Verifica se houve alguma exclusão ou edição
+        if alteracoes["edited_rows"] or alteracoes["deleted_rows"]:
+            try:
+                engine = connect_db()
+                with engine.connect() as conn:
+                    # --- TRATAMENTO DE EXCLUSÕES (DELETE) ---
+                    for row_idx in alteracoes["deleted_rows"]:
+                        # Pega o ID real da linha que foi apagada na interface
+                        item_id = df_filtrado.iloc[row_idx]["id"]
+                        
+                        conn.execute(
+                            text("DELETE FROM estoque WHERE id = :id"), 
+                            {"id": int(item_id)}
+                        )
+                    
+                    # --- TRATAMENTO DE EDIÇÕES (UPDATE) ---
+                    for row_idx, mudancas in alteracoes["edited_rows"].items():
+                        item_id = df_filtrado.iloc[row_idx]["id"]
+                        
+                        # Monta a query dinamicamente só com as colunas que o usuário alterou
+                        set_clauses = ", ".join([f"{coluna} = :{coluna}" for coluna in mudancas.keys()])
+                        query = text(f"UPDATE estoque SET {set_clauses} WHERE id = :id")
+                        
+                        # Prepara os parâmetros juntando as mudanças com o ID
+                        parametros = mudancas.copy()
+                        parametros["id"] = int(item_id)
+                        
+                        conn.execute(query, parametros)
+                    
+                    # Efetiva a transação no banco de dados
+                    conn.commit() 
+                
+                st.success("✅ Estoque atualizado com sucesso!")
+                time.sleep(3) # Pequena pausa para o usuário ler a mensagem de sucesso
+                st.rerun() # Atualiza a página para recalcular totais e sumir com os itens excluídos
+                
+            except Exception as e:
+                st.error(f"Erro ao salvar no banco de dados: {e}")
+        else:
+            st.info("Nenhuma alteração foi feita na tabela.")
+
+    st.markdown("---")
+    
+    # --- Exportação (O seu código continua aqui) ---
     if not df_filtrado.empty:
         col_btn, _ = st.columns([1, 4]) 
         with col_btn:
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                # Renomeia colunas para o Excel ficar mais bonito
-                df_to_export = df_filtrado.rename(columns=lambda c: c.replace('_', ' ').title())
-                df_to_export.to_excel(writer, index=False, sheet_name='Estoque_Atual')
-            
+            output = io.BytesIO()            
             processed_data = output.getvalue()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_name = f"relatorio_estoque_{timestamp}.xlsx"

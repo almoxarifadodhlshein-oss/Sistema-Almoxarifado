@@ -1,87 +1,106 @@
-/* --- 1. IMPORTAÇÃO DA FONTE --- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* --- 1. IMPORTAÇÃO DAS FONTES --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
-/* --- VARIÁVEIS DE COR --- */
-:root {
-    --dhl-yellow: #fecc00;
-    --dhl-red: #d40511;
-    --dhl-dark-text: #262730;
-    --dhl-white: #FFFFFF;
-    --dhl-light-gray: #F0F2F6;
-}
-
-/* --- APLICAÇÃO CORRIGIDA DA FONTE --- */
 body {
     font-family: 'Inter', sans-serif;
 }
 
-/* --- ESTILOS GERAIS E CORREÇÕES --- */
-.block-container {
-    padding-top: 2rem;
-}
+/* --- ESTILOS GERAIS DA PÁGINA --- */
 [data-testid="stAppViewContainer"] > .main {
-    background-color: var(--dhl-white);
+    background-color: #fcf9f8; 
 }
 
-/* --- CABEÇALHO PROFISSIONAL --- */
+/* 1. A SOLUÇÃO DEFINITIVA PARA ESTICAR A TELA (Ataca todas as versões do Streamlit) */
+[data-testid="stAppViewBlockContainer"],
+[data-testid="block-container"],
+.block-container {
+    max-width: 95% !important; /* 95% para deixar um respiro nas bordas, sem encostar no limite */
+    width: 100% !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    padding-top: 2rem !important;
+}
+
+/* 2. OBRIGA O HTML DA HOME A ACOMPANHAR A TELA */
+[data-testid="stElementContainer"],
+iframe {
+    width: 100% !important;
+    border: none !important;
+}
+
+/* --- 2. CABEÇALHO SUPERIOR --- */
 .app-header {
     display: flex;
     align-items: center;
-    padding: 10px 0px;
-    background-color: var(--dhl-white);
-    border-bottom: 4px solid var(--dhl-yellow);
-    margin-bottom: 20px;
+    padding: 15px 25px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border-left: 6px solid #d40511; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    margin-bottom: 25px;
 }
 
-.logo-img {
-    height: 80px; /* ESTA LINHA CONTROLA O TAMANHO DA LOGO */
-    margin-right: 20px;
+.logo-img { height: 35px; margin-right: 20px; }
+.header-divider { height: 30px; width: 2px; background-color: #e5e2e1; margin-right: 20px; }
+.app-title { font-size: 20px; color: #1b1c1c; font-weight: 800; margin: 0; font-family: 'Manrope', sans-serif; }
+
+/* --- 3. BARRA LATERAL (SIDEBAR) --- */
+[data-testid="stSidebar"] { background-color: #f6f3f2 !important; }
+[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+    color: #a70009 !important; font-family: 'Manrope', sans-serif; font-weight: 800;
 }
 
-.app-title {
-    font-size: 28px;
-    color: var(--dhl-red);
-    font-weight: 700;
-    margin: 0;
+/* --- 4. MENU LATERAL (ESCONDER BOLINHAS E ESTILIZAR) --- */
+/* Esconde a bolinha (radio) */
+[data-testid="stSidebar"] [role="radiogroup"] > label > div:first-child {
+    display: none !important;
 }
 
-/* --- BARRA LATERAL (SIDEBAR) --- */
-[data-testid="stSidebar"] {
-    background-color: var(--dhl-light-gray);
-    padding-top: 2rem;
-}
-[data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] .stRadio > label {
-    color: var(--dhl-dark-text);
-    font-weight: 500;
-}
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] header {
-    color: var(--dhl-red);
-    font-weight: 700;
+/* Estilo do botão do menu */
+[data-testid="stSidebar"] [role="radiogroup"] > label {
+    padding: 10px 15px !important;
+    margin-bottom: 5px !important;
+    border-radius: 8px !important;
+    background-color: transparent !important;
+    border-left: 4px solid transparent !important;
+    transition: all 0.2s ease-in-out !important;
+    width: 100% !important;
 }
 
-/* --- BOTÕES --- */
-.stButton>button {
-    border: 2px solid var(--dhl-red);
-    background-color: var(--dhl-red);
-    color: var(--dhl-white) !important;
-    border-radius: 5px;
-    transition: all 0.2s;
-    font-weight: 600;
-}
-.stButton>button:hover {
-    background-color: var(--dhl-white);
-    color: var(--dhl-red) !important;
-    border-color: var(--dhl-red);
+/* Efeito Hover */
+[data-testid="stSidebar"] [role="radiogroup"] > label:hover { 
+    background-color: #e5e2e1 !important; 
 }
 
-/* --- RÁDIO (MENU DE NAVEGAÇÃO) --- */
-.st-emotion-cache-1y4p8pa [data-baseweb="radio"] {
-    background-color: var(--dhl-yellow);
-    border-color: var(--dhl-dark-text);
+/* Item SELECIONADO */
+[data-testid="stSidebar"] [role="radiogroup"] > label[data-checked="true"],
+[data-testid="stSidebar"] [role="radiogroup"] > label:has(input:checked) {
+    background-color: rgba(254, 203, 0, 0.15) !important; 
+    border-left: 4px solid #d40511 !important; 
 }
 
-/* --- AJUSTE DE ESPAÇAMENTO DO MENU NA SIDEBAR --- */
+/* Texto do menu */
+[data-testid="stSidebar"] [role="radiogroup"] p {
+    font-family: 'Inter', sans-serif !important; 
+    font-size: 14px !important; 
+    font-weight: 600 !important;
+    color: #5e3f3b !important; 
+    margin: 0 !important; 
+    text-transform: none !important;
+}
 
-[data-testid="stSidebar"] [data-testid="stRadio"] > div {
-    margin-bottom: 40px; /* Aumenta o espaço abaixo de cada item do menu */
+/* Texto SELECIONADO */
+[data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"] p,
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p {
+    color: #d40511 !important; 
+    font-weight: 800 !important;
+}
+
+/* --- 5. BOTÃO DE SAIR --- */
+[data-testid="stSidebar"] .stButton > button {
+    background-color: transparent !important; border: 2px solid #e8bdb7 !important;
+    color: #a70009 !important; border-radius: 8px; font-weight: 700; width: 100%;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background-color: #ffdad6 !important; border-color: #a70009 !important;
 }

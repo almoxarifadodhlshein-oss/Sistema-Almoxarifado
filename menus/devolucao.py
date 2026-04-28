@@ -8,11 +8,13 @@ import pytz
 # 1. NOVAS IMPORTAÇÕES NECESSÁRIAS
 from sqlalchemy import text
 from utils.db_connection import connect_db
-
+from streamlit_drawable_canvas import st_canvas
 # Importações dos outros módulos de utilidades
 from email_utils import enviar_email_devolucao
 from utils.estoque_db import atualizar_estoque
 from utils.itens_db import listar_itens_por_categoria
+# 1. NOVA IMPORTAÇÃO: Traz a lista da base mestre
+#from utils.colaboradores_db import get_lista_colaboradores
 
 # --- FUNÇÕES DE AJUDA ADAPTADAS PARA POSTGRESQL ---
 
@@ -77,11 +79,20 @@ def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, tu
                     VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :motivo, :stat_item, :acao, :item, :qtd, :tam, :email)
                 """)
                 conn.execute(query, {
-                    "data": data_str, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
-                    "colab": colaborador.strip().upper(), "resp": responsavel.strip(), "turno": turno.strip(),
-                    "cc": centro_de_custo.strip().upper(), "motivo": motivo.strip(), "stat_item": status_item.strip(),
-                    "acao": acao.strip(), "item": nome.strip().upper(), "qtd": int(qtd),
-                    "tam": tam.strip().upper() if tam else "", "email": email_coordenador.strip()
+                    "data": data_str, 
+                    "cpf": cpf.strip(), 
+                    "coord": coordenador.strip().upper(),
+                    "colab": colaborador.strip().upper(), 
+                    "resp": responsavel.strip().upper(), 
+                    "turno": turno.strip(),
+                    "cc": centro_de_custo.strip().upper(), 
+                    "motivo": motivo.strip(), 
+                    "stat_item": status_item.strip(),
+                    "acao": acao.strip(), 
+                    "item": nome.strip().upper(), 
+                    "qtd": int(qtd),
+                    "tam": tam.strip().upper() if tam else "", 
+                    "email": email_coordenador.strip()
                 })
             conn.commit()
         return True, None
@@ -125,25 +136,28 @@ def render_form_devolucao_avulsa():
     )
 
     with st.form("devolucao_avulsa_form", clear_on_submit=True):
-        cpf = st.text_input("CPF", key=f"devolucao_avulsa_cpf")
+
+        st.markdown("**Identificação do Colaborador**")
+
+        col_nome, col_cpf = st.columns(2)
+        with col_cpf:
+            cpf = st.text_input("CPF (Apenas números)", key=f"devolucao_avulsa_cpf")
+        with col_nome:
+            colaborador = st.text_input("Colaborador que está devolvendo", key=f"devolucao_avulsa_colaborador")
+        st.markdown("---")
+
         coordenador = st.text_input("Coordenador", key=f"devolucao_avulsa_coordenador")
-        colaborador = st.text_input("Colaborador que está devolvendo", key=f"devolucao_avulsa_colaborador")
         email_coordenador = st.selectbox(
             "E-mail do Coordenador", 
             options= [""] + coordenadores_emails,
             key=f"devolucao_avulsa_email_coordenador"
         )
-        responsavel = st.selectbox(
-            "Responsável",
-            ["ANDREZZA SABINO", "PAMELA SIMEÃO",
-             "RAFAEL CRISTOVÃO","SUELI BARBOSA", "ORLANDO ALVES", 
-             "JOVEM APRENDIZ"],
-            key=f"devolucao_avulsa_responsavel"
-        )
-        turno = st.selectbox("Turno", ["ADM", "1° TURNO", "2° TURNO", "3° TURNO"], key=f"devolucao_avulsa_turno")
+        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key=f"devolucao_avulsa_responsavel")
+        
+        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO"], key=f"devolucao_avulsa_turno")
         centro_de_custo = st.selectbox("Centro de Custo", [""] + ["RC", "3P"], key=f"devolucao_avulsa_cc")
-        motivo = st.selectbox("Motivo da Devolução", ["AVARIADO", "HIGIENIZAÇÃO", "TROCA DE TAMANHO", "DESLIGAMENTO", "FIM DE CONTRATO", "OUTRO"], key=f"devolucao_avulsa_motivo")
-        status_item = st.selectbox("Status do Item Devolvido", ["NOVO", "HIGIENIZADO", "AVARIADO"], key=f"devolucao_avulsa_status")
+        motivo = st.selectbox("Motivo da Devolução", ["", "AVARIADO", "HIGIENIZAÇÃO", "TROCA DE TAMANHO", "DESLIGAMENTO", "FIM DE CONTRATO", "OUTRO"], key=f"devolucao_avulsa_motivo")
+        status_item = st.selectbox("Status do Item Devolvido", ["", "NOVO", "HIGIENIZADO", "AVARIADO"], key=f"devolucao_avulsa_status")
         
         # --- NOVO CAMPO DE AÇÃO ---
         acao_estoque = st.radio(
@@ -164,6 +178,21 @@ def render_form_devolucao_avulsa():
             with col3:
                 st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"devolucao_avulsa_item_qtd_{i}")
         
+        st.markdown("### ✍️ Assinatura de Confirmação")
+        st.caption("O colaborador deve assinar abaixo para validar a retirada na data de hoje:")
+        
+        # O Quadro de desenho
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 255, 255, 0)",  
+            stroke_width=3,                       
+            stroke_color="#000000",               
+            background_color="#eeeeee",           
+            height=150,                           
+            width=400,                            
+            drawing_mode="freedraw",
+            key=f"canvas_saida_{st.session_state.reset_saida}", # Chave dinâmica para limpar
+        )
+
         enviar = st.form_submit_button("Registrar Devolução")
 
     if enviar:
@@ -246,6 +275,7 @@ def render_form_devolucao_avulsa():
         else:
             st.success("Devolução para descarte registrada com sucesso! O estoque não foi alterado.")
 
+        st.session_state.reset_saida += 1
         time.sleep(4)
         st.rerun()
         
@@ -358,6 +388,5 @@ def render_form_devolver_emprestimo():
                 st.session_state.devolucao_emprestimo_id = None
 
                 st.rerun()
-
 
 

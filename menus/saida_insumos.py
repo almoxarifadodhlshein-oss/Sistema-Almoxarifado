@@ -1,6 +1,7 @@
 # menus/saida_insumos.py
 import time
 import streamlit as st
+import pandas as pd
 from datetime import datetime
 import pytz
 # 1. NOVAS IMPORTAÇÕES NECESSÁRIAS
@@ -13,6 +14,7 @@ from utils.estoque_db import atualizar_estoque
 from utils.itens_db import listar_itens_por_categoria
 from utils.coordenadores_db import get_coordenadores # Usando a função centralizada
 
+
 # tentativa de importar utilitário de itens (fallback para listas vazias)
 try:
     from utils.itens_db import init_items_db, listar_itens
@@ -20,7 +22,7 @@ try:
 except Exception:
     def listar_itens(cat): return []
 
-def _get_coordenadores():
+def get_coordenadores():
     engine = connect_db()
     try:
         with engine.connect() as conn:
@@ -105,13 +107,18 @@ def carregar():
 
     # --- Formulário de Saída ---
     with st.form("saida_insumos_form", clear_on_submit=True):
-        # Campos gerais do formulário
-        cpf = st.text_input("CPF", key="saida_insumos_cpf")
+        
+        st.markdown("**Identificação do Colaborador**")
+        col_nome, col_cpf = st.columns(2)
+        with col_cpf:
+            cpf_value = st.text_input("CPF (Apenas números)", key="saida_insumos_cpf")
+        with col_nome:
+            colaborador_value = st.text_input("Nome Completo", key="saida_insumos_colaborador")
+        st.markdown("---")
         coordenador = st.text_input("Coordenador", key="saida_insumos_coordenador")
-        colaborador = st.text_input("Colaborador", key="saida_insumos_colaborador")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key="saida_insumos_email_coordenador")
-        responsavel = st.selectbox("Responsável", ["ANDREZZA SABINO", "PAMELA SIMEÃO", "RAFAEL CRISTOVÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="saida_insumos_responsavel")
-        turno = st.selectbox("Turno", ["ADM", "1° TURNO", "2° TURNO", "3° TURNO"], key="saida_insumos_turno")
+        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key="saida_insumos_responsavel")
+        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO",], key="saida_insumos_turno")
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key="saida_insumos_centro_de_custo")
 
         st.markdown("---")
@@ -124,6 +131,7 @@ def carregar():
             with col3:
                 st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"saida_insumos_item_qtd_{i}")
         
+
         enviar = st.form_submit_button("Registrar Saída de Insumos")
 
     # A lógica de envio fica FORA do 'with st.form'
@@ -157,9 +165,14 @@ def carregar():
         
         # Registro no banco de dados de saída
         ok, err = registrar_saida_insumos(
-            cpf=cpf_value, coordenador=coordenador_value, colaborador=colaborador_value,
-            responsavel=responsavel_value, email_coordenador=email_value,
-            turno=turno_value, centro_de_custo=centro_value, itens_saida=itens_final
+            cpf=cpf_value, 
+            coordenador=coordenador_value, 
+            colaborador=colaborador_value,
+            responsavel=responsavel_value, 
+            email_coordenador=email_value,
+            turno=turno_value, 
+            centro_de_custo=centro_value, 
+            itens_saida=itens_final
         )
 
         if not ok: st.error(f"Erro ao salvar no banco: {err}"); return
@@ -196,11 +209,9 @@ def carregar():
         except Exception as exc:
             st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
+        st.session_state.reset_saida += 1
         time.sleep(5)
-
-
         st.rerun()
-
 
 
 

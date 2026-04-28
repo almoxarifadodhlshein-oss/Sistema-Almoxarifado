@@ -10,10 +10,13 @@ from datetime import datetime
 from email_utils import enviar_email_emprestimo
 from utils.estoque_db import atualizar_estoque
 from utils.itens_db import listar_itens_por_categoria
+from streamlit_drawable_canvas import st_canvas
+# 1. NOVA IMPORTAÇÃO: Traz a lista da base mestre
+#from utils.colaboradores_db import get_lista_colaboradores
 
 
 # Função para ler os e-mails cadastrados
-def _get_coordenadores():
+def get_coordenadores():
     engine = connect_db()
     try:
         with engine.connect() as conn:
@@ -61,11 +64,19 @@ def registrar_emprestimo(cpf, coordenador, colaborador, responsavel, email_coord
                     VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :stat_item, :stat_emp, :item, :qtd, :tam, :email)
                 """)
                 conn.execute(query, {
-                    "data": data_str, "cpf": cpf.strip(), "coord": coordenador.strip().upper(),
-                    "colab": colaborador.strip().upper(), "resp": responsavel.strip(), "turno": turno.strip(),
-                    "cc": centro_de_custo.strip().upper(), "stat_item": status_item.strip(),
-                    "stat_emp": status_emprestimo, "item": nome.strip().upper(), "qtd": int(qtd),
-                    "tam": tam.strip().upper() if tam else "", "email": email_coordenador.strip()
+                    "data": data_str, 
+                    "cpf": cpf.strip(), 
+                    "coord": coordenador.strip().upper(),
+                    "colab": colaborador.strip().upper(), 
+                    "resp": responsavel.strip().upper(), 
+                    "turno": turno.strip(),
+                    "cc": centro_de_custo.strip().upper(), 
+                    "stat_item": status_item.strip(),
+                    "stat_emp": status_emprestimo, 
+                    "item": nome.strip().upper(), 
+                    "qtd": int(qtd),
+                    "tam": tam.strip().upper() if tam else "", 
+                    "email": email_coordenador.strip()
                 })
             conn.commit()
         return True, None
@@ -86,7 +97,7 @@ def carregar():
 
     # A busca de dados agora fica fora do formulário
     epi_names = listar_itens_por_categoria("EPI")
-    coordenadores_emails = _get_coordenadores()
+    coordenadores_emails = get_coordenadores()
 
     if not epi_names:
         st.warning("Nenhum EPI encontrado no 'Cadastro de Itens'. Por favor, cadastre os itens primeiro.")
@@ -99,15 +110,22 @@ def carregar():
 
     # Usamos uma chave estática para o formulário
     with st.form("emprestimo_form", clear_on_submit=True):
-        # Campos gerais do formulário com chaves estáticas e únicas
-        cpf = st.text_input("CPF", key="emprestimo_cpf")
-        colaborador = st.text_input("Colaborador", key="emprestimo_colaborador")
+        
+        st.markdown("**Identificação do Colaborador**")
+
+        col_nome, col_cpf = st.columns(2)
+        with col_cpf:
+            cpf_value = st.text_input("CPF (Apenas números)", key="emprestimo_cpf")
+        with col_nome:
+            colaborador_value = st.text_input("Nome Completo", key="emprestimo_colaborador")
+        st.markdown("---")
+
         coordenador = st.text_input("Coordenador", key="emprestimo_coordenador")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key="emprestimo_email_coordenador")
-        responsavel = st.selectbox("Responsável", ["ANDREZZA SABINO", "PAMELA SIMEÃO", "RAFAEL CRISTOVÃO", "SUELI BARBOSA", "ORLANDO ALVES", "JOVEM APRENDIZ"], key="emprestimo_responsavel")
-        turno = st.selectbox("Turno", ["ADM", "1° TURNO", "2° TURNO", "3° TURNO"], key="emprestimo_turno")
+        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key="emprestimo_responsavel")
+        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO"], key="emprestimo_turno")
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key="emprestimo_centro_de_custo")
-        status_item = st.selectbox("Status dos Itens Emprestados", ["NOVO", "HIGIENIZADO"], key="emprestimo_status_item")
+        status_item = st.selectbox("Status dos Itens Emprestados", ["", "NOVO", "HIGIENIZADO"], key="emprestimo_status_item")
 
         st.markdown("---")
         for i in range(num_itens):
@@ -118,6 +136,21 @@ def carregar():
                 st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"emprestimo_item_tam_{i}")
             with col3:
                 st.number_input(f"Quantidade #{i+1}", min_value=1, value=1, key=f"emprestimo_item_qtd_{i}")
+
+        st.markdown("### ✍️ Assinatura de Confirmação")
+        st.caption("O colaborador deve assinar abaixo para validar a retirada na data de hoje:")
+        
+        # O Quadro de desenho
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 255, 255, 0)",  
+            stroke_width=3,                       
+            stroke_color="#000000",               
+            background_color="#eeeeee",           
+            height=150,                           
+            width=400,                            
+            drawing_mode="freedraw",
+            key=f"canvas_saida_{st.session_state.reset_saida}", # Chave dinâmica para limpar
+        )
 
         enviar = st.form_submit_button("Registrar Empréstimo")
 
@@ -199,10 +232,9 @@ def carregar():
         except Exception as exc:
             st.warning(f"Empréstimo salvo, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
+        st.session_state.reset_saida += 1
         time.sleep(5)
-
         st.rerun()
-
 
 
 

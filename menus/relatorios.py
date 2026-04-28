@@ -157,7 +157,7 @@ def carregar():
         col_btn, _ = st.columns([1, 4])
         with col_btn:
             st.download_button(
-                label=f"📥 Baixar Relatório (Excel)",
+                label=f"📥 Baixar Relatório",
                 data=processed_data,
                 file_name=file_name,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

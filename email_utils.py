@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import pytz
 
-def enviar_email_smtp(assunto, corpo_html, destinatario):
+def enviar_email_smtp(assunto, corpo_html, destinatario, responsavel):
     """
     Função para enviar e-mails usando o servidor SMTP do Gmail.
     Esta função funciona perfeitamente na nuvem.
@@ -22,7 +22,12 @@ def enviar_email_smtp(assunto, corpo_html, destinatario):
         msg['Subject'] = assunto
         msg.attach(MIMEText(corpo_html, 'html'))
 
-        # --- Bloco de Conexão Corrigido para o GMAIL ---
+        if "COORDENADOR" in responsavel.upper():
+            # Adicione aqui os e-mails que devem receber a cópia
+            emails_copia = ["br.dsc.Guarulhos.cftv.shein@dpdhl.onmicrosolt.com", "orlando.alves@dhl.com", "almoxarifado.dhlshein@dhl.com"]
+            msg['Cc'] = ", ".join(emails_copia)
+
+        # --- Configuração SMTP DHL (padrão que funciona) ---
         # Conecta-se ao servidor SMTP do Gmail na porta 465 com SSL
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(remetente, senha)
@@ -30,6 +35,16 @@ def enviar_email_smtp(assunto, corpo_html, destinatario):
         # --- Fim do Bloco Corrigido ---
         
         return True, "E-mail enviado com sucesso."
+    except Exception as e:
+        return False, f"Falha ao enviar e-mail via SMTP: {e}"
+
+        
+    except smtplib.SMTPAuthenticationError:
+        return False, "Erro de autenticação SMTP. Verifique as credenciais no Streamlit secrets."
+    except smtplib.SMTPException as e:
+        return False, f"Erro SMTP: {e}"
+    except TimeoutError:
+        return False, "Timeout ao conectar ao servidor SMTP. Verifique sua conexão de internet."
     except Exception as e:
         return False, f"Falha ao enviar e-mail via SMTP: {e}"
 
@@ -105,7 +120,7 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
         assunto = f"Saída de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
-        return enviar_email_smtp(assunto, corpo_html, email_coordenador)
+        return enviar_email_smtp(assunto, corpo_html, email_coordenador, responsavel)
 
     except Exception as exc:
         return False, f"Erro ao preparar o conteúdo do e-mail: {exc}"
@@ -176,7 +191,7 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
         assunto = f"Saída de Insumos – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
-        return enviar_email_smtp(assunto, corpo_html, email_coordenador)
+        return enviar_email_smtp(assunto, corpo_html, email_coordenador, responsavel)
 
     except Exception as exc:
         return False, f"Erro ao preparar o conteúdo do e-mail de saída de insumos: {exc}"
@@ -245,7 +260,7 @@ Brasil
         assunto = f"Empréstimo de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
-        return enviar_email_smtp(assunto, corpo_html, email_coordenador)
+        return enviar_email_smtp(assunto, corpo_html, email_coordenador, responsavel)
 
     except Exception as exc:
         return False, f"Erro ao preparar o conteúdo do e-mail de saída de insumos: {exc}"
@@ -317,7 +332,7 @@ Brasil
         assunto = f"Devolução de EPI – {(colaborador or '').upper()} – {data_formatada}"
 
         # --- 2. Chamada da Função Universal de Envio ---
-        return enviar_email_smtp(assunto, corpo_html, email_coordenador)
+        return enviar_email_smtp(assunto, corpo_html, email_coordenador, responsavel)
 
     except Exception as exc:
         return False, f"Erro ao preparar o conteúdo do e-mail de saída de insumos: {exc}"

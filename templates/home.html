@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { "primary": "#a70009", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f3f2", "surface-container": "#f0eded" },
+                    fontFamily: { "headline": ["Manrope"], "body": ["Inter"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: transparent; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #dcd9d9; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-stone-900 p-0 m-0 min-w-full bg-transparent">
+    <div class="w-full min-w-full space-y-8 px-2">
+        <div>
+            <h1 class="text-3xl font-extrabold text-stone-900 tracking-tight font-headline">Bem-vindo(a), $nome_usuario!</h1>
+            <p class="text-stone-500 mt-1 font-body">Visão geral do inventário e controle de saídas para hoje.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between h-36 border border-stone-100 shadow-sm transition-all hover:-translate-y-1">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-stone-400">VALOR TOTAL DO ESTOQUE</span>
+                    <div class="p-2 bg-stone-100 rounded-lg"><span class="material-symbols-outlined text-primary">payments</span></div>
+                </div>
+                <div>
+                    <div class="text-2xl font-extrabold text-stone-900 font-headline">$valor_formatado</div>
+                </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between h-36 border border-stone-100 shadow-sm transition-all hover:-translate-y-1">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-stone-400">TOTAL DE EPIs EMITIDOS</span>
+                    <div class="p-2 bg-stone-100 rounded-lg"><span class="material-symbols-outlined text-yellow-600">safety_check</span></div>
+                </div>
+                <div>
+                    <div class="text-2xl font-extrabold text-stone-900 font-headline">$total_saidas_epis</div>
+                </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between h-36 border border-stone-100 shadow-sm transition-all hover:-translate-y-1">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-stone-400">ESTOQUE BAIXO</span>
+                    <div class="p-2 bg-stone-100 rounded-lg"><span class="material-symbols-outlined text-primary">priority_high</span></div>
+                </div>
+                <div>
+                    <div class="text-2xl font-extrabold text-stone-900 font-headline">$itens_baixo_estoque Itens</div>
+                    <div class="text-[10px] text-red-600 font-bold flex items-center gap-1 mt-1">Ação requerida</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-8">
+            <div class="xl:col-span-3 bg-surface-container-lowest rounded-xl border border-stone-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 bg-surface-container border-b border-stone-100">
+                    <h2 class="text-sm font-bold text-stone-900 uppercase tracking-tight font-headline">Itens Mais Utilizados (EPI)</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-stone-50 text-stone-500">
+                                <th class="px-6 py-3 text-[10px] font-black uppercase tracking-widest">NOME DO ITEM</th>
+                                <th class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-right">TOTAL EMITIDO</th>
+                                <th class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-right">Nº DE EMISSÕES</th>
+                                <th class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-100">
+                            $linhas_tabela_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="xl:col-span-2 space-y-4">
+                <div class="bg-surface-container-lowest rounded-xl p-6 h-full border border-stone-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-sm font-bold text-stone-900 uppercase tracking-tight font-headline">Últimos Empréstimos Pendentes</h2>
+                    </div>
+                    <div class="space-y-4">
+                        $cards_emprestimos_html
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
