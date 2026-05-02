@@ -10,10 +10,29 @@ def gerar_pdf_assinado(nome, cpf, df_saidas, df_emprestimos, df_devolucoes, df_i
     pasta_utils = os.path.dirname(os.path.abspath(__file__)) 
     pasta_raiz = os.path.dirname(pasta_utils) 
     
-    # Tenta puxar o logo (usando "dhl_logo.png" que apareceu num erro seu, ou "logo.png")
+    # Tenta puxar o logo
     caminho_logo_dhl = os.path.join(pasta_raiz, "dhl_logo.png") 
     caminho_logo_normal = os.path.join(pasta_raiz, "logo.png")
     caminho_logo = caminho_logo_dhl if os.path.exists(caminho_logo_dhl) else caminho_logo_normal
+
+    # =======================================================
+    # LÓGICA DA DATA DE ADMISSÃO (1ª Retirada de EPI)
+    # =======================================================
+    data_admissao = ""
+    if not df_saidas.empty and 'data' in df_saidas.columns:
+        datas_validas = df_saidas['data'].dropna().astype(str).tolist()
+        if datas_validas:
+            # Pega a menor data (a mais antiga) e pega só os primeiros 10 caracteres (YYYY-MM-DD)
+            data_mais_antiga = min(datas_validas)[:10]
+            # Formata de YYYY-MM-DD para DD/MM/YYYY
+            if "-" in data_mais_antiga:
+                partes = data_mais_antiga.split("-")
+                if len(partes) == 3:
+                    data_admissao = f"{partes[2]}/{partes[1]}/{partes[0]}"
+                else:
+                    data_admissao = data_mais_antiga
+            else:
+                data_admissao = data_mais_antiga
 
     # =======================================================
     # NOVO CABEÇALHO CORPORATIVO (TERMO DE RESPONSABILIDADE)
@@ -54,20 +73,19 @@ def gerar_pdf_assinado(nome, cpf, df_saidas, df_emprestimos, df_devolucoes, df_i
     
     pdf.set_xy(10, y_linha3 + 12)
     
-    # --- Linha 4: Função, Admissão, Demissão ---
+    # --- Linha 4: Função e Admissão (Removida a Demissão) ---
     y_linha4 = pdf.get_y()
-    pdf.rect(10, y_linha4, 95, 12)
-    pdf.rect(105, y_linha4, 47, 12)
-    pdf.rect(152, y_linha4, 48, 12)
+    # Como a Demissão saiu, ajustamos a largura para preencher os 190mm totais:
+    # 105mm para Função e 85mm para a Admissão.
+    pdf.rect(10, y_linha4, 105, 12)
+    pdf.rect(115, y_linha4, 85, 12)
     
     pdf.set_xy(10, y_linha4 + 1)
-    pdf.cell(95, 5, "FUNCAO:", border=0, align="L")
+    pdf.cell(105, 5, "FUNCAO:", border=0, align="L")
     
-    pdf.set_xy(105, y_linha4 + 1)
-    pdf.cell(47, 5, "DATA DE ADMISSAO:", border=0, align="L")
-    
-    pdf.set_xy(152, y_linha4 + 1)
-    pdf.cell(48, 5, "DATA DE DEMISSAO:", border=0, align="L")
+    pdf.set_xy(115, y_linha4 + 1)
+    # Injetando a variável que calculamos lá em cima:
+    pdf.cell(85, 5, f"DATA DE ADMISSAO: {data_admissao}", border=0, align="L")
     
     pdf.set_xy(10, y_linha4 + 12)
     
@@ -90,27 +108,9 @@ def gerar_pdf_assinado(nome, cpf, df_saidas, df_emprestimos, df_devolucoes, df_i
 
     # Proteção de conversão de caracteres para evitar crash na nuvem (latin-1)
     texto_seguro = texto_termo.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(190, 4, texto_seguro, border="LTR", align="J")
     
-    y_ass = pdf.get_y()
-
-    # MODIFICAÇÃO 2: Cria um bloco vazio de 22mm de altura e fecha com "LBR" (Left, Bottom, Right)
-    pdf.cell(190, 22, "", border="LBR", ln=1)
-    
-    # --- Linha de Assinatura ---
-    pdf.line(35, y_ass + 14, 115, y_ass + 14) # Desenha a linha física com o "lápis" do PDF
-    pdf.set_xy(35, y_ass + 15)
-    pdf.set_font("Arial", "", 8)
-    # Já colocamos o nome do colaborador debaixo da linha para ficar ainda mais oficial
-    pdf.cell(80, 4, f"Assinatura do Colaborador: {nome}", align="C")
-    
-    # --- Linha de Data ---
-    pdf.line(145, y_ass + 14, 175, y_ass + 14)
-    pdf.set_xy(145, y_ass + 15)
-    pdf.cell(30, 4, "Data", align="C")
-    
-    # Devolve o cursor para o lugar certo para as tabelas começarem
-    pdf.set_xy(10, y_ass + 22)
+    # Volta a borda fechada "1" e remove o restante dos códigos de assinatura
+    pdf.multi_cell(190, 4, texto_seguro, border=1, align="J")
     pdf.ln(5)
 
     # =======================================================
@@ -148,7 +148,9 @@ def gerar_pdf_assinado(nome, cpf, df_saidas, df_emprestimos, df_devolucoes, df_i
         for idx, (_, row) in enumerate(df.iterrows()):
             tem_assinatura = False
             ass_b64 = row.get('assinatura')
-            if tipo_tabela == "SAIDA_EPI" and ass_b64 and isinstance(ass_b64, str) and "," in ass_b64:
+            
+            # Removida a trava do tipo_tabela. Agora, se tiver assinatura válida, ele imprime!
+            if ass_b64 and isinstance(ass_b64, str) and "," in ass_b64:
                 tem_assinatura = True
 
             altura_linha = 16 if tem_assinatura else 8

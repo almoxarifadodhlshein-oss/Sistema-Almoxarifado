@@ -5,6 +5,10 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import pytz
+import base64
+from io import BytesIO
+from PIL import Image
+import numpy as np
 # 1. NOVAS IMPORTAÇÕES NECESSÁRIAS
 from sqlalchemy import text
 from utils.db_connection import connect_db
@@ -57,7 +61,7 @@ def _update_status_emprestimo(emprestimo_id, novo_status):
     except Exception as e:
         return False, str(e)
 
-def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, turno, centro_de_custo, motivo, status_item, email_coordenador, itens, acao):
+def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, turno, centro_de_custo, motivo, status_item, email_coordenador, itens, acao, assinatura_b64):
     engine = connect_db()
     try:
         with engine.connect() as conn:
@@ -69,14 +73,14 @@ def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, tu
                     id SERIAL PRIMARY KEY, data TEXT, cpf TEXT, coordenador TEXT, 
                     colaborador TEXT, responsavel TEXT, turno TEXT, centro_de_custo TEXT, 
                     motivo TEXT, status_item TEXT, acao TEXT, item TEXT, quantidade INTEGER, 
-                    tamanho TEXT, email_coordenador TEXT, emprestimo_id_associado INTEGER
+                    tamanho TEXT, email_coordenador TEXT, emprestimo_id_associado INTEGER, assinatura TEXT
                 )"""))
             
             for nome, tam, qtd in itens:
                 if not str(nome).strip(): continue
                 query = text("""
-                    INSERT INTO devolucoes (data, cpf, coordenador, colaborador, responsavel, turno, centro_de_custo, motivo, status_item, acao, item, quantidade, tamanho, email_coordenador)
-                    VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :motivo, :stat_item, :acao, :item, :qtd, :tam, :email)
+                    INSERT INTO devolucoes (data, cpf, coordenador, colaborador, responsavel, turno, centro_de_custo, motivo, status_item, acao, item, quantidade, tamanho, email_coordenador, assinatura)
+                    VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :motivo, :stat_item, :acao, :item, :qtd, :tam, :email, :ass)
                 """)
                 conn.execute(query, {
                     "data": data_str, 
@@ -92,7 +96,8 @@ def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, tu
                     "item": nome.strip().upper(), 
                     "qtd": int(qtd),
                     "tam": tam.strip().upper() if tam else "", 
-                    "email": email_coordenador.strip()
+                    "email": email_coordenador.strip(),
+                    "ass": assinatura_b64
                 })
             conn.commit()
         return True, None
@@ -124,47 +129,54 @@ def carregar():
 def render_form_devolucao_avulsa():
     st.markdown("##### Registrar Devolução Avulsa")
     
-    
-    form_key = f"devolucao_avulsa_form"
+    # =======================================================
+    # O MOTOR DO RESET MÁGICO (EXCLUSIVO PARA DEVOLUÇÕES)
+    # =======================================================
+    if 'reset_devolucao' not in st.session_state:
+        st.session_state.reset_devolucao = 0
+        
+    rd = st.session_state.reset_devolucao # Atalho para aplicar em todos os campos
     
     epi_names = listar_itens_por_categoria("EPI")
     coordenadores_emails = _get_coordenadores()
     
+    # O input de quantidade fica fora do form para atualizar a página em tempo real
     num_itens = st.number_input(
         "Quantidade de tipos de itens para devolução", min_value=1, max_value=10,
-        key=f"devolucao_avulsa_num_itens"
+        key=f"devolucao_avulsa_num_itens_{rd}"
     )
 
-    with st.form("devolucao_avulsa_form", clear_on_submit=True):
+    # --- Formulário de Devolução ---
+    with st.form("devolucao_avulsa_form", clear_on_submit=False):
 
         st.markdown("**Identificação do Colaborador**")
 
         col_nome, col_cpf = st.columns(2)
         with col_cpf:
-            cpf = st.text_input("CPF (Apenas números)", key=f"devolucao_avulsa_cpf")
+            cpf = st.text_input("CPF (Apenas números)", max_chars=11, key=f"devolucao_avulsa_cpf_{rd}")
         with col_nome:
-            colaborador = st.text_input("Colaborador que está devolvendo", key=f"devolucao_avulsa_colaborador")
+            colaborador = st.text_input("Colaborador que está devolvendo", key=f"devolucao_avulsa_colaborador_{rd}")
         st.markdown("---")
 
-        coordenador = st.text_input("Coordenador", key=f"devolucao_avulsa_coordenador")
+        coordenador = st.text_input("Coordenador", key=f"devolucao_avulsa_coordenador_{rd}")
         email_coordenador = st.selectbox(
             "E-mail do Coordenador", 
-            options= [""] + coordenadores_emails,
-            key=f"devolucao_avulsa_email_coordenador"
+            options=[""] + coordenadores_emails,
+            key=f"devolucao_avulsa_email_coordenador_{rd}"
         )
-        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key=f"devolucao_avulsa_responsavel")
+        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key=f"devolucao_avulsa_responsavel_{rd}")
         
-        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO"], key=f"devolucao_avulsa_turno")
-        centro_de_custo = st.selectbox("Centro de Custo", [""] + ["RC", "3P"], key=f"devolucao_avulsa_cc")
-        motivo = st.selectbox("Motivo da Devolução", ["", "AVARIADO", "HIGIENIZAÇÃO", "TROCA DE TAMANHO", "DESLIGAMENTO", "FIM DE CONTRATO", "OUTRO"], key=f"devolucao_avulsa_motivo")
-        status_item = st.selectbox("Status do Item Devolvido", ["", "NOVO", "HIGIENIZADO", "AVARIADO"], key=f"devolucao_avulsa_status")
+        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO"], key=f"devolucao_avulsa_turno_{rd}")
+        centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key=f"devolucao_avulsa_cc_{rd}")
+        motivo = st.selectbox("Motivo da Devolução", ["", "AVARIADO", "HIGIENIZAÇÃO", "TROCA DE TAMANHO", "DESLIGAMENTO", "FIM DE CONTRATO", "OUTRO"], key=f"devolucao_avulsa_motivo_{rd}")
+        status_item = st.selectbox("Status do Item Devolvido", ["", "NOVO", "HIGIENIZADO", "AVARIADO"], key=f"devolucao_avulsa_status_{rd}")
         
-        # --- NOVO CAMPO DE AÇÃO ---
+        # --- CAMPO DE AÇÃO ---
         acao_estoque = st.radio(
             "Ação a ser tomada com os itens:",
             ["Repor no estoque", "Descartar item"],
             horizontal=True,
-            key=f"devolucao_avulsa_acao"
+            key=f"devolucao_avulsa_acao_{rd}"
         )
         
         st.markdown("---")
@@ -172,14 +184,14 @@ def render_form_devolucao_avulsa():
         for i in range(num_itens):
             col1, col2, col3 = st.columns([3, 1, 1])
             with col1:
-                st.selectbox(f"Item #{i+1}", [""] + epi_names, key=f"devolucao_avulsa_item_nome_{i}", disabled=(not epi_names))
+                st.selectbox(f"Item #{i+1}", [""] + epi_names, key=f"devolucao_avulsa_item_nome_{i}_{rd}", disabled=(not epi_names))
             with col2:
-                st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"devolucao_avulsa_item_tam_{i}")
+                st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"devolucao_avulsa_item_tam_{i}_{rd}")
             with col3:
-                st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"devolucao_avulsa_item_qtd_{i}")
+                st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"devolucao_avulsa_item_qtd_{i}_{rd}")
         
         st.markdown("### ✍️ Assinatura de Confirmação")
-        st.caption("O colaborador deve assinar abaixo para validar a retirada na data de hoje:")
+        st.caption("O colaborador deve assinar abaixo para validar a devolução na data de hoje:")
         
         # O Quadro de desenho
         canvas_result = st_canvas(
@@ -190,37 +202,63 @@ def render_form_devolucao_avulsa():
             height=150,                           
             width=400,                            
             drawing_mode="freedraw",
-            key=f"canvas_saida_{st.session_state.reset_saida}", # Chave dinâmica para limpar
+            key=f"canvas_devolucao_{rd}", # Chave isolada para devoluções
         )
 
-        enviar = st.form_submit_button("Registrar Devolução")
+        enviar = st.form_submit_button("Registrar Devolução", type="primary")
 
     if enviar:
-        # --- LÓGICA DE COLETA CORRIGIDA USANDO O MÉTODO SEGURO .get() ---
+        # Coleta de valores usando o ID dinâmico
+        if not cpf: 
+            st.error("O campo 'CPF' é obrigatório.")
+            st.stop()
+        elif not cpf.isdigit() or len(cpf) != 11:
+            st.error("⚠️ O CPF deve conter exatamente 11 números (sem pontos ou traços).")
+            st.stop()
+        colaborador_val = st.session_state.get(f"devolucao_avulsa_colaborador_{rd}", "")
+        cpf_val = st.session_state.get(f"devolucao_avulsa_cpf_{rd}", "")
+        coordenador_val = st.session_state.get(f"devolucao_avulsa_coordenador_{rd}", "")
+        email_val = st.session_state.get(f"devolucao_avulsa_email_coordenador_{rd}", "")
+        responsavel_val = st.session_state.get(f"devolucao_avulsa_responsavel_{rd}", "")
+        turno_val = st.session_state.get(f"devolucao_avulsa_turno_{rd}", "")
+        cc_val = st.session_state.get(f"devolucao_avulsa_cc_{rd}", "")
+        motivo_val = st.session_state.get(f"devolucao_avulsa_motivo_{rd}", "")
+        status_item_val = st.session_state.get(f"devolucao_avulsa_status_{rd}", "")
+        acao_estoque_val = st.session_state.get(f"devolucao_avulsa_acao_{rd}", "")
         
-        colaborador_val = st.session_state.get(f"devolucao_avulsa_colaborador", "")
-        cpf_val = st.session_state.get(f"devolucao_avulsa_cpf", "")
-        coordenador_val = st.session_state.get(f"devolucao_avulsa_coordenador", "")
-        email_val = st.session_state.get(f"devolucao_avulsa_email_coordenador", "")
-        responsavel_val = st.session_state.get(f"devolucao_avulsa_responsavel", "")
-        turno_val = st.session_state.get(f"devolucao_avulsa_turno", "")
-        cc_val = st.session_state.get(f"devolucao_avulsa_cc", "")
-        motivo_val = st.session_state.get(f"devolucao_avulsa_motivo", "")
-        status_item_val = st.session_state.get(f"devolucao_avulsa_status", "")
-        acao_estoque_val = st.session_state.get(f"devolucao_avulsa_acao", "")
-        
+        # Validações Rígidas
+        if not cpf_val: st.error("O campo 'CPF' é obrigatório."); st.stop()
+        if not colaborador_val: st.error("O campo 'Colaborador' é obrigatório."); st.stop()
+        if not cc_val: st.error("O campo 'Centro de Custo' é obrigatório."); st.stop()
+        if not email_val or email_val == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); st.stop()
+        if not motivo_val: st.error("O campo 'Motivo da Devolução' é obrigatório."); st.stop()
+        if not status_item_val: st.error("O campo 'Status do Item Devolvido' é obrigatório."); st.stop()
+        if not coordenador_val: st.error("O campo 'Coordenador' é obrigatório."); st.stop()
+
         itens_final = []
         for i in range(num_itens):
-            nome = st.session_state.get(f"devolucao_avulsa_item_nome_{i}", "")
-            tam = st.session_state.get(f"devolucao_avulsa_item_tam_{i}", "")
-            qtd = st.session_state.get(f"devolucao_avulsa_item_qtd_{i}", 1)
+            nome = st.session_state.get(f"devolucao_avulsa_item_nome_{i}_{rd}", "")
+            tam = st.session_state.get(f"devolucao_avulsa_item_tam_{i}_{rd}", "")
+            qtd = st.session_state.get(f"devolucao_avulsa_item_qtd_{i}_{rd}", 1)
             if nome:
-                itens_final.append((nome, tam, qtd))
+                itens_final.append((nome, tam, int(qtd)))
         
         if not itens_final:
-            st.error("Adicione pelo menos um item."); return
+            st.error("Adicione pelo menos um item."); st.stop()
 
-        # O resto do código continua como estava...
+        # Validação da Assinatura
+        if canvas_result.json_data is None or len(canvas_result.json_data.get("objects", [])) == 0:
+            st.warning("⚠️ Por favor, colete a assinatura do colaborador antes de salvar.")
+            st.stop() # Para a execução, mas preserva os campos!
+            
+        img_data = canvas_result.image_data
+        img = Image.fromarray(img_data.astype('uint8'), 'RGBA')
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        assinatura_final_b64 = f"data:image/png;base64,{img_str}"
+
+        # Registro no Banco de Dados
         ok_reg, err_reg = registrar_devolucao_avulsa_bd(
             cpf=cpf_val, 
             coordenador=coordenador_val, 
@@ -232,9 +270,32 @@ def render_form_devolucao_avulsa():
             status_item=status_item_val, 
             email_coordenador=email_val,
             itens=itens_final, 
-            acao=acao_estoque_val
+            acao=acao_estoque_val,
+            assinatura_b64=assinatura_final_b64
         )
 
+        if not ok_reg:
+            st.error(f"Erro ao registrar devolução: {err_reg}"); st.stop()
+
+        # Atualização de Estoque
+        if acao_estoque_val == "Repor no estoque":
+            erros_estoque = []
+            for nome, tam, qtd in itens_final:
+                sucesso_estoque, msg_estoque = atualizar_estoque(
+                    item_nome=nome, tamanho=tam, status=status_item_val,
+                    tipo="EPI", quantidade_delta=int(qtd)
+                )
+                if not sucesso_estoque:
+                    erros_estoque.append(f"Item '{nome}': {msg_estoque}")
+            
+            if erros_estoque:
+                st.warning("Devolução registrada, mas com erros na reposição de estoque:\n" + "\n".join(erros_estoque))
+            else:
+                st.success("✅ Devolução registrada e estoque atualizado com sucesso!")
+        else:
+            st.success("✅ Devolução para descarte registrada com sucesso! O estoque não foi alterado.")
+
+        # Disparo de Email
         try:
             sucesso_email, msg_email = enviar_email_devolucao(
                 cpf=cpf_val,
@@ -255,28 +316,11 @@ def render_form_devolucao_avulsa():
         except Exception as e:
             st.warning(f"A devolução foi salva, mas ocorreu um erro inesperado ao preparar o e-mail: {e}")
 
-        if not ok_reg:
-            st.error(f"Erro ao registrar devolução: {err_reg}"); return
-        
-        if acao_estoque_val == "Repor no estoque":
-            erros_estoque = []
-            for nome, tam, qtd in itens_final:
-                sucesso_estoque, msg_estoque = atualizar_estoque(
-                    item_nome=nome, tamanho=tam, status=status_item_val,
-                    tipo="EPI", quantidade_delta=int(qtd)
-                )
-                if not sucesso_estoque:
-                    erros_estoque.append(f"Item '{nome}': {msg_estoque}")
-            
-            if erros_estoque:
-                st.warning("Devolução registrada, mas com erros na reposição de estoque:\n" + "\n".join(erros_estoque))
-            else:
-                st.success("Devolução registrada e estoque atualizado com sucesso!")
-        else:
-            st.success("Devolução para descarte registrada com sucesso! O estoque não foi alterado.")
-
-        st.session_state.reset_saida += 1
-        time.sleep(4)
+        # =======================================================
+        # SINALIZA SUCESSO E RESETA O FORMULÁRIO DE DEVOLUÇÃO
+        # =======================================================
+        st.session_state.reset_devolucao += 1
+        time.sleep(3)
         st.rerun()
         
 

@@ -92,76 +92,88 @@ def _safe_rerun():
 def carregar():
     st.subheader("📤 Registro de Saída de Insumos")
 
+    # =======================================================
+    # O MOTOR DO RESET MÁGICO (EXCLUSIVO PARA INSUMOS)
+    # =======================================================
+    if 'reset_insumo' not in st.session_state:
+        st.session_state.reset_insumo = 0
+        
+    ri = st.session_state.reset_insumo # Atalho para aplicar em todos os campos
+
     # --- Widgets de configuração (fora do formulário) ---
     insumo_names = listar_itens_por_categoria("INSUMO")
     coordenadores_emails = get_coordenadores()
 
     if not insumo_names:
         st.warning("Nenhum Insumo encontrado no 'Cadastro de Itens'. Por favor, cadastre os itens primeiro.")
-        return
+        st.stop() # Alterado de return para st.stop()
 
     num_itens = st.number_input(
         "Quantidade de tipos de Insumo para saída", min_value=1, max_value=10,
-        key="saida_insumos_num_itens"
+        key=f"saida_insumos_num_itens_{ri}"
     )
 
     # --- Formulário de Saída ---
-    with st.form("saida_insumos_form", clear_on_submit=True):
+    with st.form("saida_insumos_form", clear_on_submit=False): # Mudar para False
         
         st.markdown("**Identificação do Colaborador**")
         col_nome, col_cpf = st.columns(2)
         with col_cpf:
-            cpf_value = st.text_input("CPF (Apenas números)", key="saida_insumos_cpf")
+            cpf_value = st.text_input("CPF (Apenas números)", max_chars=11, key=f"saida_insumos_cpf_{ri}")
         with col_nome:
-            colaborador_value = st.text_input("Nome Completo", key="saida_insumos_colaborador")
+            colaborador_value = st.text_input("Nome Completo", key=f"saida_insumos_colaborador_{ri}")
         st.markdown("---")
-        coordenador = st.text_input("Coordenador", key="saida_insumos_coordenador")
-        email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key="saida_insumos_email_coordenador")
-        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key="saida_insumos_responsavel")
-        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO",], key="saida_insumos_turno")
-        centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key="saida_insumos_centro_de_custo")
+        coordenador = st.text_input("Coordenador", key=f"saida_insumos_coordenador_{ri}")
+        email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key=f"saida_insumos_email_coordenador_{ri}")
+        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key=f"saida_insumos_responsavel_{ri}")
+        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO",], key=f"saida_insumos_turno_{ri}")
+        centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key=f"saida_insumos_centro_de_custo_{ri}")
 
         st.markdown("---")
         for i in range(num_itens):
             col1, col2, col3 = st.columns([3, 1, 1])
             with col1:
-                st.selectbox(f"Insumo #{i+1}", [""] + insumo_names, key=f"saida_insumos_item_nome_{i}", disabled=(not insumo_names))
+                st.selectbox(f"Insumo #{i+1}", [""] + insumo_names, key=f"saida_insumos_item_nome_{i}_{ri}", disabled=(not insumo_names))
             with col2:
-                st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"saida_insumos_item_tam_{i}")
+                st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"saida_insumos_item_tam_{i}_{ri}")
             with col3:
-                st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"saida_insumos_item_qtd_{i}")
+                st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"saida_insumos_item_qtd_{i}_{ri}")
         
 
-        enviar = st.form_submit_button("Registrar Saída de Insumos")
+        enviar = st.form_submit_button("Registrar Saída de Insumos", type="primary")
 
     # A lógica de envio fica FORA do 'with st.form'
     if enviar:
         # Coleta de dados do formulário
-        cpf_value = st.session_state.get("saida_insumos_cpf", "")
-        coordenador_value = st.session_state.get("saida_insumos_coordenador", "")
-        colaborador_value = st.session_state.get("saida_insumos_colaborador", "")
-        responsavel_value = st.session_state.get("saida_insumos_responsavel", "")
-        email_value = st.session_state.get("saida_insumos_email_coordenador", "")
-        turno_value = st.session_state.get("saida_insumos_turno", "")
-        centro_value = st.session_state.get("saida_insumos_centro_de_custo", "")
+        cpf_value = st.session_state.get(f"saida_insumos_cpf_{ri}", "")
+        coordenador_value = st.session_state.get(f"saida_insumos_coordenador_{ri}", "")
+        colaborador_value = st.session_state.get(f"saida_insumos_colaborador_{ri}", "")
+        responsavel_value = st.session_state.get(f"saida_insumos_responsavel_{ri}", "")
+        email_value = st.session_state.get(f"saida_insumos_email_coordenador_{ri}", "")
+        turno_value = st.session_state.get(f"saida_insumos_turno_{ri}", "")
+        centro_value = st.session_state.get(f"saida_insumos_centro_de_custo_{ri}", "")
 
         itens_final = []
-        num_itens_registrados = st.session_state.get("saida_insumos_num_itens", 1)
+        num_itens_registrados = st.session_state.get(f"saida_insumos_num_itens_{ri}", 1)
         for i in range(num_itens_registrados):
-            escolha = st.session_state.get(f"saida_insumos_item_nome_{i}", "")
-            tam = st.session_state.get(f"saida_insumos_item_tam_{i}", "")
-            qtd = st.session_state.get(f"saida_insumos_item_qtd_{i}", 1)
+            escolha = st.session_state.get(f"saida_insumos_item_nome_{i}_{ri}", "")
+            tam = st.session_state.get(f"saida_insumos_item_tam_{i}_{ri}", "")
+            qtd = st.session_state.get(f"saida_insumos_item_qtd_{i}_{ri}", 1)
             if escolha:
                 itens_final.append((escolha, tam, int(qtd)))
 
-        # Validações
-        if not centro_value: st.error("O campo 'Centro de Custo' é obrigatório."); return
-        if not itens_final: st.error("Preencha pelo menos um insumo."); return
-        if not email_value or email_value == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); return
-        if not centro_value: st.error("O campo 'Centro de Custo' é obrigatório."); return
-        if not cpf_value: st.error("Ocampo 'CPF' é obrigatório."); return
-        if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); return
-        #if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); return
+        # Validações com st.stop()
+        if not cpf_value: 
+            st.error("O campo 'CPF' é obrigatório.")
+            st.stop()
+        elif not cpf_value.isdigit() or len(cpf_value) != 11:
+            st.error("⚠️ O CPF deve conter exatamente 11 números (sem pontos ou traços).")
+            st.stop()
+        if not centro_value: st.error("O campo 'Centro de Custo' é obrigatório."); st.stop()
+        if not itens_final: st.error("Preencha pelo menos um insumo."); st.stop()
+        if not email_value or email_value == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); st.stop()
+        if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); st.stop()
+        # if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); st.stop()
         
         # Registro no banco de dados de saída
         ok, err = registrar_saida_insumos(
@@ -175,7 +187,7 @@ def carregar():
             itens_saida=itens_final
         )
 
-        if not ok: st.error(f"Erro ao salvar no banco: {err}"); return
+        if not ok: st.error(f"Erro ao salvar no banco: {err}"); st.stop()
 
         st.success("✅ Saída de insumos registrada com sucesso!")
 
@@ -209,8 +221,11 @@ def carregar():
         except Exception as exc:
             st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
 
-        st.session_state.reset_saida += 1
-        time.sleep(5)
+        # =======================================================
+        # SINALIZA SUCESSO E RESETA TODO O FORMULÁRIO
+        # =======================================================
+        st.session_state.reset_insumo += 1
+        time.sleep(3)
         st.rerun()
 
 

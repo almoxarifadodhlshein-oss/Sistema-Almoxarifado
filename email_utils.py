@@ -63,6 +63,8 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
 
         # --- 1. Montagem do Conteúdo (Lógica que você já tinha) ---
         itens_saida = itens_saida or []
+        import pytz
+        from datetime import datetime
         fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
         data_hora_brasilia = datetime.now(fuso_horario_brasilia)
         data_hora_str = data_hora_brasilia.strftime("%Y-%m-%d %H:%M:%S")
@@ -75,17 +77,19 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
         """
         
         body_rows = ""
-        for nome, tam, qtd in itens_saida:
+        for nome, tam, qtd, status_item in itens_saida:
             body_rows += (
                 "<tr>"
-                f"<td style='padding:3px 6px;border-bottom:1px solid #ccc; width: 160px;text-align:left;'>{nome}</td>"
-                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 80px;text-align:center;'>{tam or '-'}</td>"
-                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 70px;text-align:center;'>{qtd}</td>"
+                f"<td style='padding:3px 6px;border-bottom:1px solid #ccc; width: 220px;text-align:left;'>{(nome or '').upper()}</td>"
+                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 100px;text-align:center;'>{(tam or '-').upper()}</td>"
+                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 80px;text-align:center;'>{qtd or '-'}</td>"
+                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 100px;text-align:center;'>{(status_item or '-').upper()}</td>"
                 "</tr>"
             )
 
         if not body_rows:
-            body_rows = "<tr><td colspan='3'>Nenhum item listado.</td></tr>"
+            # Atualizei o colspan para 4, já que agora a tabela tem 4 colunas
+            body_rows = "<tr><td colspan='4'>Nenhum item listado.</td></tr>"
 
         corpo_html = f"""
         <div style="font-family:Calibri, Arial, sans-serif;font-size:11pt;color:#111;">
@@ -95,7 +99,6 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
           <b>Turno:</b> {turno}<br>
           <b>Centro de Custo:</b> {centro_de_custo}<br>
           <b>Motivo:</b> {motivo}<br>
-          <b>Status:</b> {status}<br>
           <b>Efetivo:</b> {efetivo}<br>
           <b>Data:</b> {data_hora_str}<br><br>
 
@@ -105,6 +108,7 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
                 <th style='text-align:left;padding:4px 6px;border-bottom:1px solid #ccc; width: 160px;'>Item</th>
                 <th style='text-align:center;padding:10px 6px;border-bottom:1px solid #ccc; width: 80px;'>Tam</th>
                 <th style='text-align:center;padding:10px 6px;border-bottom:1px solid #ccc; width: 70px;'>Qtd</th>
+                <th style='text-align:center;padding:10px 6px;border-bottom:1px solid #ccc; width: 100px;'>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -147,12 +151,12 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
         """
 
         body_rows = ""
-        for nome, tam, qtd in itens:
+        for nome, tam, qtd in itens: # 1. Adicionamos o status_item aqui!
             body_rows += (
                 "<tr>"
-                f"<td style='padding:4px 8px;border-bottom:1px solid #ccc; width:220px;text-align:left;'>{(nome or '').upper()}</td>"
-                f"<td style='padding:4px 8px;border-bottom:1px solid #ccc; width:100px;text-align:center;'>{(tam or '-').upper()}</td>"
-                f"<td style='padding:4px 8px;border-bottom:1px solid #ccc; width:80px;text-align:center;'>{qtd}</td>"
+                f"<td style='padding:3px 6px;border-bottom:1px solid #ccc; width: 220px;text-align:left;'>{(nome or '').upper()}</td>"
+                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 100px;text-align:center;'>{(tam or '-').upper()}</td>"
+                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 80px;text-align:center;'>{qtd or '-'}</td>"
                 "</tr>"
             )
 
@@ -216,17 +220,18 @@ CEP: 07232-050<br>
 Brasil
 """
         body_rows = ""
-        for nome, tam, qtd in itens:
+        for nome, tam, qtd, status_item in itens:
             body_rows += (
                 "<tr>"
                 f"<td style='padding:3px 6px;border-bottom:1px solid #ccc; width: 220px;text-align:left;'>{(nome or '').upper()}</td>"
                 f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 100px;text-align:center;'>{(tam or '-').upper()}</td>"
                 f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 80px;text-align:center;'>{qtd or '-'}</td>"
+                f"<td style='padding:6px 6px;border-bottom:1px solid #ccc; width: 100px;text-align:center;'>{(status_item or '-').upper()}</td>" # 2. Nova linha da tabela aqui!
                 "</tr>"
             )
 
         if not body_rows:
-            body_rows = "<tr><td colspan='3'>Nenhum item listado.</td></tr>"
+            body_rows = "<tr><td colspan='4'>Nenhum item listado.</td></tr>"
 
         turno_html = f"<b>Turno:</b> {turno}<br>" if turno else ""
         corpo_html = f"""
@@ -236,7 +241,6 @@ Brasil
           <b>Responsável:</b> {responsavel or '-'}<br>
           {turno_html}
           <b>Centro de Custo:</b> {centro_de_custo}<br>
-          <b>Status do Item:</b> {status_item or '-'}<br>
           <b>Data:</b> {data_hora_str}<br><br>
 
           <table style="border-collapse:collapse;width:auto;font-size:11pt;">
@@ -245,6 +249,7 @@ Brasil
                 <th style='text-align:left;padding:4px 6px;border-bottom:1px solid #ccc; width: 220px;'>Item</th>
                 <th style='text-align:center;padding:10px 6px;border-bottom:1px solid #ccc; width: 100px;'>Tamanho</th>
                 <th style='text-align:center;padding:10px 6px;border-bottom:1px solid #ccc; width: 80px;'>Qtd</th>
+                <th style='text-align:center;padding:10px 6px;border-bottom:1px solid #ccc; width: 100px;'>Status</th>
               </tr>
             </thead>
             <tbody>
