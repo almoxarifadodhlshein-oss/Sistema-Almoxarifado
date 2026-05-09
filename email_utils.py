@@ -115,6 +115,9 @@ def enviar_email_saida_epi(coordenador=None, colaborador=None, responsavel=None,
               {body_rows}
             </tbody>
           </table>
+          <p>⚠️ Este é um email automático, por favor, não responda.</p>
+          <p>Se você tiver alguma dúvida ou precisar de assistência, entre em contato com o setor de Almoxarifado.</p>
+          <p>almoxarifado.dhlshein@dhl.com</p>
           <p>Atenciosamente,<br>Setor de Almoxarifado.</p>
           <p><b>{endereco_texto}</b></p>
         </div>
@@ -186,6 +189,9 @@ def enviar_email_saida_insumos(cpf, coordenador, colaborador, responsavel, email
               {body_rows}
             </tbody>
           </table>
+          <p>⚠️ Este é um email automático, por favor, não responda.</p>
+          <p>Se você tiver alguma dúvida ou precisar de assistência, entre em contato com o setor de Almoxarifado.</p>
+          <p>almoxarifado.dhlshein@dhl.com</p>
           <p>Atenciosamente,<br>Setor de Almoxarifado.</p>
           <p><b>{endereco_texto}</b></p>
         </div>
@@ -256,6 +262,9 @@ Brasil
               {body_rows}
             </tbody>
           </table>
+          <p>⚠️ Este é um email automático, por favor, não responda.</p>
+          <p>Se você tiver alguma dúvida ou precisar de assistência, entre em contato com o setor de Almoxarifado.</p>
+          <p>almoxarifado.dhlshein@dhl.com</p>
           <p>Atenciosamente,<br>
           Setor de Almoxarifado.</p>
           <p><b>{endereco_texto}</b></p>
@@ -271,7 +280,7 @@ Brasil
         return False, f"Erro ao preparar o conteúdo do e-mail de saída de insumos: {exc}"
                 
             
-def enviar_email_devolucao(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status_item, motivo, centro_de_custo, turno=None,):
+def enviar_email_devolucao(cpf, coordenador, colaborador, responsavel, email_coordenador, itens, status_item, centro_de_custo, turno=None,):
     try:
         if not email_coordenador or "@" not in email_coordenador:
             return False, "E-mail do coordenador inválido."
@@ -311,7 +320,6 @@ Brasil
           <b>Responsável:</b> {responsavel or '-'}<br>
           {turno_html}
           <b>Status:</b> {status_item or '-'}<br>
-          <b>Motivo:</b> {motivo}<br>
           <b>Centro de Custo:</b> {centro_de_custo}<br>
           <b>Data:</b> {data_hora_str}<br><br>
 
@@ -327,6 +335,9 @@ Brasil
               {body_rows}
             </tbody>
           </table>
+          <p>⚠️ Este é um email automático, por favor, não responda.</p>
+          <p>Se você tiver alguma dúvida ou precisar de assistência, entre em contato com o setor de Almoxarifado.</p>
+          <p>almoxarifado.dhlshein@dhl.com</p>
           <p>Atenciosamente,<br>
           Setor de Almoxarifado.</p>
           <p><b>{endereco_texto}</b></p>

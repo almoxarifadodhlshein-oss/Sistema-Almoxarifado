@@ -4,6 +4,7 @@ import time
 import streamlit as st
 import pandas as pd
 import pytz
+import json
 from sqlalchemy import text
 from utils.db_connection import connect_db
 from datetime import datetime
@@ -97,6 +98,53 @@ def registrar_emprestimo(cpf, coordenador, colaborador, responsavel, email_coord
         return True, None
     except Exception as exc:
         return False, str(exc)
+
+def registrar_emprestimo_pendente(cpf, coordenador, colaborador, responsavel, email_coordenador, turno, centro_de_custo, status_global, itens_saida, assinatura_b64):
+    engine = connect_db()
+    try:
+        with engine.connect() as conn:
+            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+            data_str = datetime.now(fuso_horario_brasilia).strftime("%Y-%m-%d %H:%M:%S")
+            
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS pendentes_emprestimos (
+                    id SERIAL PRIMARY KEY, 
+                    data TEXT, cpf TEXT, 
+                    colaborador TEXT,
+                    coordenador TEXT, 
+                    email_coordenador TEXT, 
+                    responsavel TEXT,
+                    turno TEXT, 
+                    centro_de_custo TEXT, 
+                    status_global TEXT, 
+                    itens_json TEXT, 
+                    assinatura TEXT
+                )
+            """))
+            
+            itens_str = json.dumps(itens_saida)
+            
+            query = text("""
+                INSERT INTO pendentes_emprestimos 
+                (data, cpf, colaborador, coordenador, email_coordenador, responsavel, turno, centro_de_custo, status_global, itens_json, assinatura)
+                VALUES (:data, :cpf, :colab, :coord, :email, :resp, :turno, :cc, :status, :itens, :ass)
+            """)
+            conn.execute(query, {
+                "data": data_str, "cpf": str(cpf).strip(), 
+                "colab": colaborador.strip().upper(),
+                "coord": coordenador.strip().upper(), 
+                "email": email_coordenador.strip(),
+                "resp": responsavel.strip().upper(), 
+                "turno": turno.strip(),
+                "cc": centro_de_custo.strip().upper(), 
+                "status": status_global.strip() if status_global else "",
+                "itens": itens_str, "ass": assinatura_b64
+            })
+            conn.commit()
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
 
 def _safe_rerun():
     st.rerun()
@@ -234,55 +282,80 @@ def carregar():
 
         if not itens_final: st.error("Preencha pelo menos um item."); st.stop()
 
-        # Registro no banco de dados de empréstimos
-        ok, err = registrar_emprestimo(
-            cpf=cpf_value, 
-            coordenador=coordenador_value, 
-            colaborador=colaborador_value,
-            responsavel=responsavel_value, 
-            email_coordenador=email_value,
-            turno=turno_value, 
-            centro_de_custo=centro_value, 
-            status_item=status_value_global, # Enviando fallback
-            itens=itens_final,
-            assinatura_b64=assinatura_final_b64
-        )
+        perfil_usuario = st.session_state.get("user_role", "visitante")
 
-        if not ok: st.error(f"Erro ao salvar no banco: {err}"); st.stop()
 
-        st.success("✅ Empréstimo registrado com sucesso!")
-
-        # Baixa no estoque
-        erros_estoque = []
-        # CORREÇÃO: Desempacotar 4 variáveis e usar o status INDIVIDUAL (status_item)
-        for nome, tam, qtd, status_item in itens_final:
-            sucesso_estoque, msg_estoque = atualizar_estoque(
-                item_nome=nome, tamanho=tam, status=status_item,
-                tipo="EPI", quantidade_delta=-int(qtd)
-            )
-            if not sucesso_estoque:
-                erros_estoque.append(f"Item '{nome}' ({status_item}): {msg_estoque}")
-        
-        if erros_estoque:
-            st.warning("O empréstimo foi registrado, mas com erros na baixa de estoque:\n" + "\n".join(erros_estoque))
-
-        # Envio de e-mail
-        try:
-            sucesso, msg = enviar_email_emprestimo(
+        if perfil_usuario in ["admin", "almoxarife"]:
+            ok, err = registrar_emprestimo(
                 cpf=cpf_value, 
                 coordenador=coordenador_value, 
                 colaborador=colaborador_value,
                 responsavel=responsavel_value, 
                 email_coordenador=email_value,
                 turno=turno_value, 
-                status_item=status_value_global, # Enviando fallback
                 centro_de_custo=centro_value, 
-                itens=itens_final
+                status_item=status_value_global, # Enviando fallback
+                itens=itens_final,
+                assinatura_b64=assinatura_final_b64
             )
-            if sucesso: st.info(f"📧 {msg}")
-            else: st.warning(f"Empréstimo salvo, mas e-mail não enviado: {msg}")
-        except Exception as exc:
-            st.warning(f"Empréstimo salvo, mas ocorreu um erro ao preparar o e-mail: {exc}")
+
+            if not ok: st.error(f"Erro ao salvar no banco: {err}"); st.stop()
+
+            st.success("✅ Empréstimo registrado com sucesso!")
+
+            # Baixa no estoque
+            erros_estoque = []
+            # CORREÇÃO: Desempacotar 4 variáveis e usar o status INDIVIDUAL (status_item)
+            for nome, tam, qtd, status_item in itens_final:
+                sucesso_estoque, msg_estoque = atualizar_estoque(
+                    item_nome=nome, tamanho=tam, status=status_item,
+                    tipo="EPI", quantidade_delta=-int(qtd)
+                )
+                if not sucesso_estoque:
+                    erros_estoque.append(f"Item '{nome}' ({status_item}): {msg_estoque}")
+        
+            if erros_estoque:
+                st.warning("O empréstimo foi registrado, mas com erros na baixa de estoque:\n" + "\n".join(erros_estoque))
+
+            # Envio de e-mail
+            try:
+                sucesso, msg = enviar_email_emprestimo(
+                    cpf=cpf_value, 
+                    coordenador=coordenador_value, 
+                    colaborador=colaborador_value,
+                    responsavel=responsavel_value, 
+                    email_coordenador=email_value,
+                    turno=turno_value, 
+                    status_item=status_value_global, # Enviando fallback
+                    centro_de_custo=centro_value, 
+                    itens=itens_final
+                )
+                if sucesso: st.info(f"📧 {msg}")
+                else: st.warning(f"Empréstimo salvo, mas e-mail não enviado: {msg}")
+            except Exception as exc:
+                st.warning(f"Empréstimo salvo, mas ocorreu um erro ao preparar o e-mail: {exc}")
+        else:
+            # ---------------------------------------------------
+            # ROTA 2: VISITANTE (Vai para Quarentena / Pendentes)
+            # ---------------------------------------------------
+            ok, err = registrar_emprestimo_pendente(
+                colaborador=colaborador_value, 
+                cpf=cpf_value, 
+                coordenador=coordenador_value,
+                email_coordenador=email_value, 
+                responsavel=responsavel_value, 
+                status_global=status_value_global, 
+                turno=turno_value,
+                centro_de_custo=centro_value, 
+                itens_saida=itens_final,
+                assinatura_b64=assinatura_final_b64 
+            )
+
+            if not ok: st.error(f"Erro ao enviar solicitação: {err}"); st.stop()
+
+            st.success("⏳ Solicitação de Saída enviada com sucesso! Aguardando aprovação do Almoxarifado.")
+            st.info("O estoque e o relatório só serão atualizados após a aprovação.")
+
 
         st.session_state.reset_emprestimo += 1
         time.sleep(3)

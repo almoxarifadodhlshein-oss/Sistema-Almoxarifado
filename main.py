@@ -221,6 +221,7 @@ else:
     # Mapeamento de nomes de menu para nomes de módulo
     PAGES = {
         "🏠 Home": "home",
+        "✅ Aprovações Pendentes": "aprovacoes",
         "📧 Cadastro de Emails": "cadastro_coordenadores",
         "📝 Cadastro de Itens": "cadastro_itens",
         "➕ Entrada de Estoque": "entrada_estoque",

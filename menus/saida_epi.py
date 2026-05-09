@@ -1,6 +1,5 @@
-# Em menus/saida_epi.py
-
 import time
+import json # <-- NOVO IMPORT ADICIONADO PARA OS PENDENTES
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -36,7 +35,9 @@ try:
 except Exception:
     def listar_itens(cat): return []
 
-# FUNÇÃO AJUSTADA: Agora recebe e salva a assinatura_b64
+# ====================================================================
+# FUNÇÃO 1: SALVA DIRETO NA TABELA OFICIAL (Para Almoxarife / Admin)
+# ====================================================================
 def registrar_saida_epi(colaborador, cpf, coordenador, email_coordenador, responsavel, motivo, status, efetivo, turno, centro_de_custo, itens_saida, assinatura_b64):
     engine = connect_db()
     try:
@@ -62,11 +63,11 @@ def registrar_saida_epi(colaborador, cpf, coordenador, email_coordenador, respon
                     item TEXT,
                     tamanho TEXT,
                     quantidade INTEGER,
-                    assinatura TEXT -- NOVA COLUNA ADICIONADA
+                    assinatura TEXT
                 )
             """))
             
-            for item, tamanho, quantidade, status in itens_saida:
+            for item, tamanho, quantidade, status_item in itens_saida:
                 if not str(item).strip(): continue
                 
                 query = text("""
@@ -82,32 +83,89 @@ def registrar_saida_epi(colaborador, cpf, coordenador, email_coordenador, respon
                     "email": email_coordenador.strip(),
                     "resp": responsavel.strip().upper(), 
                     "motivo": motivo.strip(), 
-                    "status": status.strip(),
+                    "status": status_item.strip(), # Ajustado para o status individual
                     "efetivo": efetivo.strip(), 
                     "turno": turno.strip(), 
                     "cc": centro_de_custo.strip().upper(),
                     "item": item.strip().upper(), 
                     "tam": tamanho.strip().upper() if tamanho else "", 
                     "qtd": int(quantidade),
-                    "ass": assinatura_b64 # SALVANDO A ASSINATURA DA HORA
+                    "ass": assinatura_b64
                 })
             conn.commit()
         return True, None
     except Exception as e:
         return False, str(e)
 
+
+# ====================================================================
+# FUNÇÃO 2: SALVA NA QUARENTENA (Para Visitantes)
+# ====================================================================
+def registrar_saida_epi_pendente(colaborador, cpf, coordenador, email_coordenador, responsavel, motivo, status_global, efetivo, turno, centro_de_custo, itens_saida, assinatura_b64):
+    engine = connect_db()
+    try:
+        with engine.connect() as conn:
+            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+            data_atual_obj = datetime.now(fuso_horario_brasilia)
+            data_str = data_atual_obj.strftime("%Y-%m-%d %H:%M:%S")
+            
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS pendentes_saida_epis (
+                    id SERIAL PRIMARY KEY,
+                    data TEXT,
+                    colaborador TEXT,
+                    cpf TEXT,
+                    coordenador TEXT,
+                    email_coordenador TEXT,
+                    responsavel TEXT,
+                    motivo TEXT,
+                    status_global TEXT,
+                    efetivo TEXT,
+                    turno TEXT,
+                    centro_de_custo TEXT,
+                    itens_json TEXT, 
+                    assinatura TEXT
+                )
+            """))
+            
+            itens_str = json.dumps(itens_saida)
+            
+            query = text("""
+                INSERT INTO pendentes_saida_epis 
+                (data, colaborador, cpf, coordenador, email_coordenador, responsavel, motivo, status_global, efetivo, turno, centro_de_custo, itens_json, assinatura)
+                VALUES (:data, :colab, :cpf, :coord, :email, :resp, :motivo, :status, :efetivo, :turno, :cc, :itens, :ass)
+            """)
+            
+            conn.execute(query, {
+                "data": data_str, 
+                "colab": colaborador.strip().upper(), 
+                "cpf": str(cpf).strip(),
+                "coord": coordenador.strip().upper(), 
+                "email": email_coordenador.strip(),
+                "resp": responsavel.strip().upper(), 
+                "motivo": motivo.strip(), 
+                "status": status_global.strip() if status_global else "",
+                "efetivo": efetivo.strip(), 
+                "turno": turno.strip(), 
+                "cc": centro_de_custo.strip().upper(),
+                "itens": itens_str, 
+                "ass": assinatura_b64
+            })
+            conn.commit()
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+
 # --- FUNÇÃO PRINCIPAL DA PÁGINA ---
 
 def carregar():
     st.subheader("📦 Registro de Saída de EPI")
 
-    # =======================================================
-    # O MOTOR DO RESET MÁGICO
-    # =======================================================
     if 'reset_saida' not in st.session_state:
         st.session_state.reset_saida = 0
         
-    rs = st.session_state.reset_saida # Atalho para aplicar em todos os campos
+    rs = st.session_state.reset_saida
 
     epi_names = listar_itens_por_categoria("EPI")
     coordenadores_emails = get_coordenadores()
@@ -121,7 +179,6 @@ def carregar():
         key=f"saida_epi_num_itens_{rs}"
     )
 
-    # --- Formulário de Saída ---
     with st.form("saida_epi_form", clear_on_submit=False):
         
         st.markdown("**Identificação do Colaborador**")
@@ -142,9 +199,7 @@ def carregar():
 
         st.markdown("---")
         for i in range(num_itens):
-            # Mudamos para 4 colunas (Ajustei as larguras para caber tudo bem formatado)
             col1, col2, col3, col4 = st.columns([3, 1, 1, 1.5]) 
-            
             with col1:
                 st.selectbox(f"EPI #{i+1}", [""] + epi_names, key=f"saida_epi_item_nome_{i}_{rs}", disabled=(not epi_names))
             with col2:
@@ -152,14 +207,12 @@ def carregar():
             with col3:
                 st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"saida_epi_item_qtd_{i}_{rs}")
             with col4:
-                # O novo campo de Status individual para CADA item!
                 st.selectbox(f"Status #{i+1}", ["", "NOVO", "HIGIENIZADO"], key=f"saida_epi_item_status_{i}_{rs}")
         
         st.markdown("---")
         st.markdown("### ✍️ Assinatura de Confirmação")
         st.caption("O colaborador deve assinar abaixo para validar a retirada na data de hoje:")
         
-        # O Quadro de desenho
         canvas_result = st_canvas(
             fill_color="rgba(255, 255, 255, 0)",  
             stroke_width=3,                       
@@ -184,8 +237,6 @@ def carregar():
         turno_value = st.session_state.get(f"saida_epi_turno_{rs}", "")
         centro_value = st.session_state.get(f"saida_epi_centro_de_custo_{rs}", "")
 
-        # O status geral foi removido, então usamos "MÚLTIPLOS" como fallback global 
-        # (caso o seu banco/email ainda exija esse campo).
         status_value_global = "MÚLTIPLOS" 
         
         if not cpf_value: 
@@ -200,10 +251,9 @@ def carregar():
         if not efetivo_value: st.error("O campo 'Efetivo' é obrigatório."); st.stop()
         if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); st.stop()
 
-        # Validação da Assinatura
         if canvas_result.json_data is None or len(canvas_result.json_data.get("objects", [])) == 0:
             st.warning("⚠️ Por favor, colete a assinatura do colaborador antes de salvar.")
-            st.stop() # Para a execução, mas preserva os campos!
+            st.stop()
             
         img_data = canvas_result.image_data
         img = Image.fromarray(img_data.astype('uint8'), 'RGBA')
@@ -228,61 +278,97 @@ def carregar():
 
         if not itens_final: st.error("Preencha pelo menos um EPI."); st.stop()
         
-        # Salvando no banco 
-        ok, err = registrar_saida_epi(
-            colaborador=colaborador_value, 
-            cpf=cpf_value, 
-            coordenador=coordenador_value,
-            email_coordenador=email_value, 
-            responsavel=responsavel_value, 
-            motivo=motivo_value,
-            status=status_value_global, # Enviando o fallback
-            efetivo=efetivo_value, 
-            turno=turno_value,
-            centro_de_custo=centro_value, 
-            itens_saida=itens_final,
-            assinatura_b64=assinatura_final_b64 
-        )
-
-        if not ok: st.error(f"Erro ao salvar no banco de saídas: {err}"); st.stop()
-
-        st.success("✅ Saída de EPI registrada com sucesso!")
-
-        erros_estoque = []
-        # ATUALIZADO: Agora desempacota 4 valores e usa o status específico do item
-        for nome, tam, qtd, status_item in itens_final:
-            sucesso_estoque, msg_estoque = atualizar_estoque(
-                item_nome=nome, tamanho=tam, status=status_item,
-                tipo="EPI", quantidade_delta=-int(qtd)
-            )
-            if not sucesso_estoque:
-                erros_estoque.append(f"Item '{nome}' ({status_item}): {msg_estoque}")
+        # =======================================================
+        # A MÁGICA ACONTECE AQUI: BIFURCAÇÃO POR PERFIL
+        # =======================================================
         
-        if erros_estoque:
-            st.warning("Saída registrada, mas com erros na baixa de estoque:\n" + "\n".join(erros_estoque))
+        # Recupera o perfil do utilizador (se não existir, assume 'visitante' por segurança)
+        perfil_usuario = st.session_state.get("user_role", "visitante") 
 
-        try:
-            sucesso, msg = enviar_email_saida_epi(
+        if perfil_usuario in ["admin", "almoxarife"]:
+            # ---------------------------------------------------
+            # ROTA 1: ALMOXARIFE / ADMIN (Salva direto e dá baixa)
+            # ---------------------------------------------------
+            ok, err = registrar_saida_epi(
+                colaborador=colaborador_value, 
                 cpf=cpf_value, 
-                coordenador=coordenador_value, 
-                colaborador=colaborador_value,
+                coordenador=coordenador_value,
+                email_coordenador=email_value, 
                 responsavel=responsavel_value, 
-                email_coordenador=email_value,
-                turno=turno_value, 
-                centro_de_custo=centro_value, 
-                status=status_value_global, # Enviando o fallback
                 motivo=motivo_value,
-                efetivo=efetivo_value,
-                itens_saida=itens_final
+                status=status_value_global, 
+                efetivo=efetivo_value, 
+                turno=turno_value,
+                centro_de_custo=centro_value, 
+                itens_saida=itens_final,
+                assinatura_b64=assinatura_final_b64 
             )
-            if sucesso: st.info(f"📧 {msg}")
-            else: st.warning(f"Saída salva, mas e-mail não enviado: {msg}")
-        except Exception as exc:
-            st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
+
+            if not ok: st.error(f"Erro ao salvar no banco de saídas: {err}"); st.stop()
+
+            st.success("✅ Saída de EPI registrada com sucesso!")
+
+            erros_estoque = []
+            for nome, tam, qtd, status_item in itens_final:
+                sucesso_estoque, msg_estoque = atualizar_estoque(
+                    item_nome=nome, 
+                    tamanho=tam, 
+                    status=status_item,
+                    tipo="EPI", 
+                    quantidade_delta=-int(qtd)
+                )
+                if not sucesso_estoque:
+                    erros_estoque.append(f"Item '{nome}' ({status_item}): {msg_estoque}")
+            
+            if erros_estoque:
+                st.warning("Saída registrada, mas com erros na baixa de estoque:\n" + "\n".join(erros_estoque))
+
+            try:
+                sucesso, msg = enviar_email_saida_epi(
+                    cpf=cpf_value, 
+                    coordenador=coordenador_value, 
+                    colaborador=colaborador_value,
+                    responsavel=responsavel_value, 
+                    email_coordenador=email_value, 
+                    turno=turno_value, 
+                    centro_de_custo=centro_value, 
+                    status=status_value_global, 
+                    motivo=motivo_value,
+                    efetivo=efetivo_value, 
+                    itens_saida=itens_final
+                )
+                if sucesso: st.info(f"📧 {msg}")
+                else: st.warning(f"Saída salva, mas e-mail não enviado: {msg}")
+            except Exception as exc:
+                st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
+
+        else:
+            # ---------------------------------------------------
+            # ROTA 2: VISITANTE (Vai para Quarentena / Pendentes)
+            # ---------------------------------------------------
+            ok, err = registrar_saida_epi_pendente(
+                colaborador=colaborador_value, 
+                cpf=cpf_value, 
+                coordenador=coordenador_value,
+                email_coordenador=email_value, 
+                responsavel=responsavel_value, 
+                motivo=motivo_value,
+                status_global=status_value_global, 
+                efetivo=efetivo_value, 
+                turno=turno_value,
+                centro_de_custo=centro_value, 
+                itens_saida=itens_final,
+                assinatura_b64=assinatura_final_b64 
+            )
+
+            if not ok: st.error(f"Erro ao enviar solicitação: {err}"); st.stop()
+
+            st.success("⏳ Solicitação de Saída enviada com sucesso! Aguardando aprovação do Almoxarifado.")
+            st.info("O estoque e o relatório só serão atualizados após a aprovação.")
 
         # =======================================================
         # SINALIZA SUCESSO E RESETA TODO O FORMULÁRIO DE UMA VEZ
         # =======================================================
         st.session_state.reset_saida += 1
-        time.sleep(3)
+        time.sleep(4)
         st.rerun()

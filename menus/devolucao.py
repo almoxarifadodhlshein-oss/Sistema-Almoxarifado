@@ -61,7 +61,7 @@ def _update_status_emprestimo(emprestimo_id, novo_status):
     except Exception as e:
         return False, str(e)
 
-def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, turno, centro_de_custo, motivo, status_item, email_coordenador, itens, acao, assinatura_b64):
+def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, turno, centro_de_custo, status_item, email_coordenador, itens, acao, assinatura_b64):
     engine = connect_db()
     try:
         with engine.connect() as conn:
@@ -71,16 +71,45 @@ def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, tu
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS devolucoes (
                     id SERIAL PRIMARY KEY, data TEXT, cpf TEXT, coordenador TEXT, 
-                    colaborador TEXT, responsavel TEXT, turno TEXT, centro_de_custo TEXT, 
-                    motivo TEXT, status_item TEXT, acao TEXT, item TEXT, quantidade INTEGER, 
+                    colaborador TEXT, responsavel TEXT, turno TEXT, centro_de_custo TEXT, status_item TEXT, acao TEXT, item TEXT, quantidade INTEGER, 
                     tamanho TEXT, email_coordenador TEXT, emprestimo_id_associado INTEGER, assinatura TEXT
                 )"""))
             
             for nome, tam, qtd in itens:
                 if not str(nome).strip(): continue
                 query = text("""
-                    INSERT INTO devolucoes (data, cpf, coordenador, colaborador, responsavel, turno, centro_de_custo, motivo, status_item, acao, item, quantidade, tamanho, email_coordenador, assinatura)
-                    VALUES (:data, :cpf, :coord, :colab, :resp, :turno, :cc, :motivo, :stat_item, :acao, :item, :qtd, :tam, :email, :ass)
+                    INSERT INTO devolucoes (
+                        data, 
+                        cpf, 
+                        coordenador, 
+                        colaborador, 
+                        responsavel, 
+                        turno, 
+                        centro_de_custo, 
+                        status_item,
+                        acao, 
+                        item, 
+                        quantidade, 
+                        tamanho, 
+                        email_coordenador, 
+                        assinatura
+                    )
+                    VALUES (
+                        :data, 
+                        :cpf, 
+                        :coord, 
+                        :colab, 
+                        :resp, 
+                        :turno, 
+                        :cc, 
+                        :stat_item, 
+                        :acao, 
+                        :item, 
+                        :qtd, 
+                        :tam, 
+                        :email, 
+                        :ass
+                    )
                 """)
                 conn.execute(query, {
                     "data": data_str, 
@@ -90,7 +119,6 @@ def registrar_devolucao_avulsa_bd(cpf, coordenador, colaborador, responsavel, tu
                     "resp": responsavel.strip().upper(), 
                     "turno": turno.strip(),
                     "cc": centro_de_custo.strip().upper(), 
-                    "motivo": motivo.strip(), 
                     "stat_item": status_item.strip(),
                     "acao": acao.strip(), 
                     "item": nome.strip().upper(), 
@@ -168,7 +196,7 @@ def render_form_devolucao_avulsa():
         
         turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO"], key=f"devolucao_avulsa_turno_{rd}")
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key=f"devolucao_avulsa_cc_{rd}")
-        motivo = st.selectbox("Motivo da Devolução", ["", "AVARIADO", "HIGIENIZAÇÃO", "TROCA DE TAMANHO", "DESLIGAMENTO", "FIM DE CONTRATO", "OUTRO"], key=f"devolucao_avulsa_motivo_{rd}")
+        #motivo = st.selectbox("Motivo da Devolução", ["", "AVARIADO", "HIGIENIZAÇÃO", "TROCA DE TAMANHO", "DESLIGAMENTO", "FIM DE CONTRATO", "OUTRO"], key=f"devolucao_avulsa_motivo_{rd}")
         status_item = st.selectbox("Status do Item Devolvido", ["", "NOVO", "HIGIENIZADO", "AVARIADO"], key=f"devolucao_avulsa_status_{rd}")
         
         # --- CAMPO DE AÇÃO ---
@@ -222,7 +250,7 @@ def render_form_devolucao_avulsa():
         responsavel_val = st.session_state.get(f"devolucao_avulsa_responsavel_{rd}", "")
         turno_val = st.session_state.get(f"devolucao_avulsa_turno_{rd}", "")
         cc_val = st.session_state.get(f"devolucao_avulsa_cc_{rd}", "")
-        motivo_val = st.session_state.get(f"devolucao_avulsa_motivo_{rd}", "")
+        # motivo_val = st.session_state.get(f"devolucao_avulsa_motivo_{rd}", "")
         status_item_val = st.session_state.get(f"devolucao_avulsa_status_{rd}", "")
         acao_estoque_val = st.session_state.get(f"devolucao_avulsa_acao_{rd}", "")
         
@@ -231,7 +259,7 @@ def render_form_devolucao_avulsa():
         if not colaborador_val: st.error("O campo 'Colaborador' é obrigatório."); st.stop()
         if not cc_val: st.error("O campo 'Centro de Custo' é obrigatório."); st.stop()
         if not email_val or email_val == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); st.stop()
-        if not motivo_val: st.error("O campo 'Motivo da Devolução' é obrigatório."); st.stop()
+        # if not motivo_val: st.error("O campo 'Motivo da Devolução' é obrigatório."); st.stop()
         if not status_item_val: st.error("O campo 'Status do Item Devolvido' é obrigatório."); st.stop()
         if not coordenador_val: st.error("O campo 'Coordenador' é obrigatório."); st.stop()
 
@@ -266,7 +294,7 @@ def render_form_devolucao_avulsa():
             responsavel=responsavel_val, 
             turno=turno_val, 
             centro_de_custo=cc_val,
-            motivo=motivo_val, 
+            #motivo=motivo_val, 
             status_item=status_item_val, 
             email_coordenador=email_val,
             itens=itens_final, 
@@ -306,7 +334,7 @@ def render_form_devolucao_avulsa():
                 itens=itens_final,
                 centro_de_custo=cc_val,
                 turno=turno_val,
-                motivo=motivo_val,
+                #motivo=motivo_val,
                 status_item=status_item_val
             )
             if sucesso_email:
@@ -320,7 +348,7 @@ def render_form_devolucao_avulsa():
         # SINALIZA SUCESSO E RESETA O FORMULÁRIO DE DEVOLUÇÃO
         # =======================================================
         st.session_state.reset_devolucao += 1
-        time.sleep(3)
+        time.sleep(4)
         st.rerun()
         
 

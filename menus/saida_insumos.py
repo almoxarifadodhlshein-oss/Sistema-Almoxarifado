@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import pytz
+import json
 # 1. NOVAS IMPORTAÇÕES NECESSÁRIAS
 from sqlalchemy import text
 from utils.db_connection import connect_db
@@ -87,6 +88,39 @@ def registrar_saida_insumos(cpf, coordenador, colaborador, responsavel, email_co
 
 def _safe_rerun():
     st.rerun()
+
+def registrar_saida_insumos_pendente(cpf, coordenador, colaborador, responsavel, email_coordenador, turno, centro_de_custo, itens_saida):
+    engine = connect_db()
+    try:
+        with engine.connect() as conn:
+            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+            data_str = datetime.now(fuso_horario_brasilia).strftime("%Y-%m-%d %H:%M:%S")
+            
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS pendentes_saida_insumos (
+                    id SERIAL PRIMARY KEY, data TEXT, cpf TEXT, colaborador TEXT,
+                    coordenador TEXT, email_coordenador TEXT, responsavel TEXT,
+                    turno TEXT, centro_de_custo TEXT, itens_json TEXT
+                )
+            """))
+            
+            itens_str = json.dumps(itens_saida)
+            
+            query = text("""
+                INSERT INTO pendentes_saida_insumos 
+                (data, cpf, colaborador, coordenador, email_coordenador, responsavel, turno, centro_de_custo, itens_json)
+                VALUES (:data, :cpf, :colab, :coord, :email, :resp, :turno, :cc, :itens)
+            """)
+            conn.execute(query, {
+                "data": data_str, "cpf": str(cpf).strip(), "colab": colaborador.strip().upper(),
+                "coord": coordenador.strip().upper(), "email": email_coordenador.strip(),
+                "resp": responsavel.strip().upper(), "turno": turno.strip(),
+                "cc": centro_de_custo.strip().upper(), "itens": itens_str
+            })
+            conn.commit()
+        return True, None
+    except Exception as e:
+        return False, str(e)
 
 
 def carregar():
@@ -175,38 +209,9 @@ def carregar():
         if not colaborador_value: st.error("O campo 'Colaborador' é obrigatório."); st.stop()
         # if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); st.stop()
         
-        # Registro no banco de dados de saída
-        ok, err = registrar_saida_insumos(
-            cpf=cpf_value, 
-            coordenador=coordenador_value, 
-            colaborador=colaborador_value,
-            responsavel=responsavel_value, 
-            email_coordenador=email_value,
-            turno=turno_value, 
-            centro_de_custo=centro_value, 
-            itens_saida=itens_final
-        )
-
-        if not ok: st.error(f"Erro ao salvar no banco: {err}"); st.stop()
-
-        st.success("✅ Saída de insumos registrada com sucesso!")
-
-        # Baixa no estoque
-        erros_estoque = []
-        for nome, tam, qtd in itens_final:
-            sucesso_estoque, msg_estoque = atualizar_estoque(
-                item_nome=nome, tamanho=tam, status="NOVO", tipo="INSUMO",
-                quantidade_delta=-int(qtd)
-            )
-            if not sucesso_estoque:
-                erros_estoque.append(f"Item '{nome}': {msg_estoque}")
-        
-        if erros_estoque:
-            st.warning("A saída foi registrada, mas com erros na baixa de estoque:\n" + "\n".join(erros_estoque))
-
-        # Envio de e-mail
-        try:
-            sucesso, msg = enviar_email_saida_insumos(
+        perfil_usuario = st.session_state.get("user_role", "visitante")
+        if perfil_usuario in ["admin", "almoxarife"]:
+            ok, err = registrar_saida_insumos(
                 cpf=cpf_value, 
                 coordenador=coordenador_value, 
                 colaborador=colaborador_value,
@@ -214,18 +219,71 @@ def carregar():
                 email_coordenador=email_value,
                 turno=turno_value, 
                 centro_de_custo=centro_value, 
-                itens=itens_final
+                itens_saida=itens_final
             )
-            if sucesso: st.info(f"📧 {msg}")
-            else: st.warning(f"Saída salva, mas e-mail não enviado: {msg}")
-        except Exception as exc:
-            st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
+
+            if not ok: st.error(f"Erro ao salvar no banco: {err}"); st.stop()
+
+            st.success("✅ Saída de insumos registrada com sucesso!")
+
+            # Baixa no estoque
+            erros_estoque = []
+            for nome, tam, qtd in itens_final:
+                sucesso_estoque, msg_estoque = atualizar_estoque(
+                    item_nome=nome, 
+                    tamanho=tam, 
+                    status="NOVO", 
+                    tipo="INSUMO",
+                    quantidade_delta=-int(qtd)
+                )
+                if not sucesso_estoque:
+                    erros_estoque.append(f"Item '{nome}': {msg_estoque}")
+        
+            if erros_estoque:
+                st.warning("A saída foi registrada, mas com erros na baixa de estoque:\n" + "\n".join(erros_estoque))
+
+            # Envio de e-mail
+            try:
+                sucesso, msg = enviar_email_saida_insumos(
+                    cpf=cpf_value, 
+                    coordenador=coordenador_value, 
+                    colaborador=colaborador_value,
+                    responsavel=responsavel_value, 
+                    email_coordenador=email_value,
+                    turno=turno_value, 
+                    centro_de_custo=centro_value, 
+                    itens=itens_final
+                )
+                if sucesso: st.info(f"📧 {msg}")
+                else: st.warning(f"Saída salva, mas e-mail não enviado: {msg}")
+            except Exception as exc:
+                st.warning(f"Saída salva, mas ocorreu um erro ao preparar o e-mail: {exc}")
+        else:
+            # ---------------------------------------------------
+            # ROTA 2: VISITANTE (Vai para Quarentena / Pendentes)
+            # ---------------------------------------------------
+            ok, err = registrar_saida_insumos_pendente(
+                colaborador=colaborador_value, 
+                cpf=cpf_value, 
+                coordenador=coordenador_value,
+                email_coordenador=email_value, 
+                responsavel=responsavel_value, 
+                turno=turno_value,
+                centro_de_custo=centro_value, 
+                itens_saida=itens_final,
+            )
+
+            if not ok: st.error(f"Erro ao enviar solicitação: {err}"); st.stop()
+
+            st.success("⏳ Solicitação de Saída enviada com sucesso! Aguardando aprovação do Almoxarifado.")
+            st.info("O estoque e o relatório só serão atualizados após a aprovação.")
+
 
         # =======================================================
         # SINALIZA SUCESSO E RESETA TODO O FORMULÁRIO
         # =======================================================
         st.session_state.reset_insumo += 1
-        time.sleep(3)
+        time.sleep(4)
         st.rerun()
 
 
