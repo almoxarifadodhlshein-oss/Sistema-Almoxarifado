@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambiente virtual
+venv/
+.env
+
+# IDE
+.idea/
+
+# Streamlit
+.streamlit/secrets.toml
+
