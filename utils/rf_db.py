@@ -1,0 +1,588 @@
+# utils/rf_db.py
+
+from sqlalchemy import text
+from utils.db_connection import connect_db
+from datetime import datetime
+import pandas as pd
+
+
+# =========================
+# INICIALIZAÇÃO DAS TABELAS
+# =========================
+
+def init_rf_db():
+
+    engine = connect_db()
+
+    with engine.begin() as conn:
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS rfs (
+
+                id SERIAL PRIMARY KEY,
+
+                numero VARCHAR(50),
+
+                codigo_rf VARCHAR(100) UNIQUE NOT NULL,
+
+                modelo TEXT,
+
+                marca TEXT,
+
+                status VARCHAR(30) NOT NULL DEFAULT 'Disponível',
+
+                area_atual VARCHAR(100),
+
+                responsavel_atual VARCHAR(100),
+
+                ativo BOOLEAN DEFAULT TRUE,
+
+                data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                ultima_verificacao TIMESTAMP
+            );
+        """))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS rf_verificacoes (
+
+                id SERIAL PRIMARY KEY,
+
+                rf_id INTEGER REFERENCES rfs(id),
+
+                semana VARCHAR(20),
+
+                data_verificacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                usuario VARCHAR(100),
+
+                presente BOOLEAN DEFAULT TRUE,
+
+                status_operacional VARCHAR(50),
+
+                observacao TEXT
+            );
+        """))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS rf_historico (
+
+                id SERIAL PRIMARY KEY,
+
+                rf_id INTEGER REFERENCES rfs(id),
+
+                acao VARCHAR(100),
+
+                status_anterior VARCHAR(50),
+
+                status_novo VARCHAR(50),
+
+                area_anterior VARCHAR(100),
+
+                area_nova VARCHAR(100),
+
+                responsavel_anterior VARCHAR(100),
+
+                responsavel_novo VARCHAR(100),
+
+                usuario VARCHAR(100),
+
+                data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                observacao TEXT
+            );
+        """))
+
+
+# =========================
+# CADASTRO RF
+# =========================
+
+def cadastrar_rf(
+    numero,
+    codigo_rf,
+    modelo,
+    marca,
+    area,
+    responsavel,
+    status="Disponível"
+):
+
+    engine = connect_db()
+
+    with engine.begin() as conn:
+
+        conn.execute(text("""
+            INSERT INTO rfs (
+
+                numero,
+                codigo_rf,
+                modelo,
+                marca,
+                status,
+                area_atual,
+                responsavel_atual
+
+            )
+            VALUES (
+
+                :numero,
+                :codigo_rf,
+                :modelo,
+                :marca,
+                :status,
+                :area,
+                :responsavel
+            )
+        """), {
+
+            "numero": numero,
+            "codigo_rf": codigo_rf.strip().upper(),
+            "modelo": modelo,
+            "marca": marca,
+            "status": status,
+            "area": area,
+            "responsavel": responsavel
+        })
+
+
+# =========================
+# LISTAGEM RF
+# =========================
+
+def listar_rfs():
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT *
+        FROM rfs
+        WHERE ativo = TRUE
+        ORDER BY codigo_rf
+    """)
+
+    return pd.read_sql(query, engine)
+
+
+# =========================
+# BUSCAR RF
+# =========================
+
+def buscar_rf_por_codigo(codigo_rf):
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT *
+        FROM rfs
+        WHERE UPPER(codigo_rf) = :codigo_rf
+        LIMIT 1
+    """)
+
+    df = pd.read_sql(query, engine, params={
+        "codigo_rf": codigo_rf.strip().upper()
+    })
+
+    if df.empty:
+        return None
+
+    return df.iloc[0].to_dict()
+
+
+# =========================
+# REGISTRAR HISTÓRICO
+# =========================
+
+def registrar_historico(
+    rf_id,
+    acao,
+    usuario,
+    status_anterior=None,
+    status_novo=None,
+    area_anterior=None,
+    area_nova=None,
+    responsavel_anterior=None,
+    responsavel_novo=None,
+    observacao=None
+):
+
+    engine = connect_db()
+
+    with engine.begin() as conn:
+
+        conn.execute(text("""
+            INSERT INTO rf_historico (
+
+                rf_id,
+                acao,
+                status_anterior,
+                status_novo,
+                area_anterior,
+                area_nova,
+                responsavel_anterior,
+                responsavel_novo,
+                usuario,
+                observacao
+
+            )
+            VALUES (
+
+                :rf_id,
+                :acao,
+                :status_anterior,
+                :status_novo,
+                :area_anterior,
+                :area_nova,
+                :responsavel_anterior,
+                :responsavel_novo,
+                :usuario,
+                :observacao
+            )
+        """), {
+
+            "rf_id": rf_id,
+            "acao": acao,
+            "status_anterior": status_anterior,
+            "status_novo": status_novo,
+            "area_anterior": area_anterior,
+            "area_nova": area_nova,
+            "responsavel_anterior": responsavel_anterior,
+            "responsavel_novo": responsavel_novo,
+            "usuario": usuario,
+            "observacao": observacao
+        })
+
+
+# =========================
+# VERIFICAÇÃO SEMANAL
+# =========================
+
+def registrar_verificacao(
+    rf_id,
+    usuario,
+    status_operacional,
+    observacao=""
+):
+
+    engine = connect_db()
+
+    semana = datetime.now().strftime("%Y-W%U")
+
+    with engine.begin() as conn:
+
+        existe = conn.execute(text("""
+            SELECT id
+            FROM rf_verificacoes
+            WHERE rf_id = :rf_id
+            AND semana = :semana
+        """), {
+
+            "rf_id": rf_id,
+            "semana": semana
+
+        }).fetchone()
+
+        if existe:
+            return False
+
+        conn.execute(text("""
+            INSERT INTO rf_verificacoes (
+
+                rf_id,
+                semana,
+                usuario,
+                status_operacional,
+                observacao
+
+            )
+            VALUES (
+
+                :rf_id,
+                :semana,
+                :usuario,
+                :status_operacional,
+                :observacao
+            )
+        """), {
+
+            "rf_id": rf_id,
+            "semana": semana,
+            "usuario": usuario,
+            "status_operacional": status_operacional,
+            "observacao": observacao
+        })
+
+        conn.execute(text("""
+            UPDATE rfs
+            SET
+                ultima_verificacao = CURRENT_TIMESTAMP,
+                status = :status
+            WHERE id = :rf_id
+        """), {
+
+            "status": status_operacional,
+            "rf_id": rf_id
+        })
+
+    return True
+
+
+# =========================
+# DASHBOARD
+# =========================
+
+def obter_dashboard_rf():
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT
+
+            COUNT(*) AS total_rfs,
+
+            COUNT(*) FILTER (
+                WHERE status = 'Disponível'
+            ) AS disponiveis,
+
+            COUNT(*) FILTER (
+                WHERE status = 'Quebrado'
+            ) AS quebrados,
+
+            COUNT(*) FILTER (
+                WHERE area_atual ILIKE '%RC%'
+            ) AS total_rc,
+
+            COUNT(*) FILTER (
+                WHERE area_atual ILIKE '%3P%'
+            ) AS total_3p
+
+        FROM rfs
+        WHERE ativo = TRUE
+    """)
+
+    df = pd.read_sql(query, engine)
+
+    return df.iloc[0].to_dict()
+
+
+# =========================
+# HISTÓRICO
+# =========================
+
+def obter_historico():
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT
+
+            h.data_hora,
+            r.codigo_rf,
+            h.acao,
+            h.usuario,
+            h.status_novo,
+            h.observacao
+
+        FROM rf_historico h
+
+        JOIN rfs r
+            ON r.id = h.rf_id
+
+        ORDER BY h.data_hora DESC
+
+        LIMIT 200
+    """)
+
+    return pd.read_sql(query, engine)
+
+# =========================
+# SESSÃO SEMANAL
+# =========================
+
+def obter_semana_atual():
+
+    return datetime.now().strftime("%Y-W%U")
+
+
+def obter_sessao_ativa():
+
+    engine = connect_db()
+
+    semana = obter_semana_atual()
+
+    query = text("""
+        SELECT *
+        FROM rf_sessoes_semanais
+        WHERE semana = :semana
+        AND finalizada = FALSE
+        LIMIT 1
+    """)
+
+    df = pd.read_sql(
+        query,
+        engine,
+        params={
+            "semana": semana
+        }
+    )
+
+    if df.empty:
+        return None
+
+    return df.iloc[0].to_dict()
+
+
+def iniciar_sessao_semana(usuario):
+
+    engine = connect_db()
+
+    semana = obter_semana_atual()
+
+    with engine.begin() as conn:
+
+        existe = conn.execute(text("""
+            SELECT id
+            FROM rf_sessoes_semanais
+            WHERE semana = :semana
+        """), {
+            "semana": semana
+        }).fetchone()
+
+        if existe:
+            return False
+
+        conn.execute(text("""
+            INSERT INTO rf_sessoes_semanais (
+
+                semana,
+                iniciada_por
+
+            )
+            VALUES (
+
+                :semana,
+                :usuario
+            )
+        """), {
+
+            "semana": semana,
+            "usuario": usuario
+        })
+
+    return True
+
+
+def finalizar_sessao_semana(usuario):
+
+    engine = connect_db()
+
+    semana = obter_semana_atual()
+
+    with engine.begin() as conn:
+
+        # RFs NÃO verificados
+        nao_verificados = conn.execute(text("""
+
+            SELECT r.id, r.status
+
+            FROM rfs r
+
+            WHERE r.ativo = TRUE
+
+            AND r.id NOT IN (
+
+                SELECT rf_id
+                FROM rf_verificacoes
+                WHERE semana = :semana
+            )
+
+        """), {
+
+            "semana": semana
+
+        }).fetchall()
+
+        for rf in nao_verificados:
+
+            rf_id = rf[0]
+            status_atual = rf[1]
+
+            # quebrado continua quebrado
+            if status_atual == "Quebrado":
+                continue
+
+            conn.execute(text("""
+                UPDATE rfs
+                SET status = 'Ausente'
+                WHERE id = :rf_id
+            """), {
+                "rf_id": rf_id
+            })
+
+            conn.execute(text("""
+                INSERT INTO rf_historico (
+
+                    rf_id,
+                    acao,
+                    usuario,
+                    status_anterior,
+                    status_novo,
+                    observacao
+
+                )
+                VALUES (
+
+                    :rf_id,
+                    'Ausência Automática',
+                    :usuario,
+                    :status_anterior,
+                    'Ausente',
+                    'RF não localizado na verificação semanal'
+
+                )
+            """), {
+
+                "rf_id": rf_id,
+                "usuario": usuario,
+                "status_anterior": status_atual
+            })
+
+        conn.execute(text("""
+            UPDATE rf_sessoes_semanais
+            SET
+                finalizada = TRUE,
+                data_finalizacao = CURRENT_TIMESTAMP
+            WHERE semana = :semana
+        """), {
+
+            "semana": semana
+        })
+
+    return True
+
+
+# =========================
+# BUSCA POR FINAL
+# =========================
+
+def buscar_rfs_por_final(final_rf):
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT *
+        FROM rfs
+        WHERE codigo_rf ILIKE :busca
+        AND ativo = TRUE
+        ORDER BY codigo_rf
+    """)
+
+    busca = f"%{final_rf}"
+
+    return pd.read_sql(
+        query,
+        engine,
+        params={
+            "busca": busca
+        }
+    )
