@@ -180,6 +180,7 @@ def carregar():
     )
 
     with st.form("saida_epi_form", clear_on_submit=False):
+        perfil_usuario = st.session_state.get("user_role", "visitante")
         
         st.markdown("**Identificação do Colaborador**")
         col_nome, col_cpf = st.columns(2)
@@ -191,23 +192,50 @@ def carregar():
         
         coordenador = st.text_input("Coordenador", key=f"saida_epi_coordenador_{rs}")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key=f"saida_epi_email_coordenador_{rs}")
-        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key=f"saida_epi_responsavel_{rs}")
-        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO",], key=f"saida_epi_turno_{rs}")
+
+        # 2. Define a lista de opções com base no perfil
+        if perfil_usuario == "visitante":
+            opcoes_responsavel = ["COORDENADOR"] # Bloqueia apenas em Coordenador
+        else:
+            opcoes_responsavel = ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"]
+        responsavel = st.selectbox("Responsável", opcoes_responsavel, key=f"saida_epi_responsavel_{rs}")
+
+        if perfil_usuario == "visitante":
+            opcoes_turno = ["", "1° TURNO", "2° TURNO"] # Bloqueia apenas em ADM
+        else:
+            opcoes_turno = ["", "ADM", "1° TURNO", "2° TURNO"]
+        turno = st.selectbox("Turno", opcoes_turno, key=f"saida_epi_turno_{rs}")
+
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key=f"saida_epi_centro_de_custo_{rs}")
-        motivo = st.selectbox("Motivo da Saída", ["", "PERDA", "1° RETIRADA", "AVARIADO", "ESQUECEU O EPI", "DEVOLUÇÃO", "TROCA DE TAMANHO", "PERÍODO VENCIDO", "MANCHA"], key=f"saida_epi_motivo_{rs}")
+
+        if perfil_usuario == "visitante":
+            opcoes_motivo = ["", "PERDA", "AVARIADO"] # Bloqueia apenas em 1° RETIRADA
+        else:
+            opcoes_motivo = ["", "PERDA", "1° RETIRADA", "AVARIADO", "ESQUECEU O EPI", "DEVOLUÇÃO", "TROCA DE TAMANHO", "PERÍODO VENCIDO", "MANCHA"]
+        motivo = st.selectbox("Motivo da Saída", opcoes_motivo, key=f"saida_epi_motivo_{rs}")
+
         efetivo = st.selectbox("Efetivo", ["", "DHL", "AGÊNCIA"], key=f"saida_epi_efetivo_{rs}")
+
+
+        # 1. Define as listas de EPIs e Status com base no perfil
+        if perfil_usuario == "visitante":
+            opcoes_epi = ["LUVA SOFT PRO 540 - CA 28793"] # Trava no EPI específico
+            opcoes_status = ["NOVO"]                      # Trava o status
+        else:
+            opcoes_epi = [""] + epi_names                 # Lista completa
+            opcoes_status = ["", "NOVO", "HIGIENIZADO"]   # Status completos
 
         st.markdown("---")
         for i in range(num_itens):
             col1, col2, col3, col4 = st.columns([3, 1, 1, 1.5]) 
             with col1:
-                st.selectbox(f"EPI #{i+1}", [""] + epi_names, key=f"saida_epi_item_nome_{i}_{rs}", disabled=(not epi_names))
+                st.selectbox(f"EPI #{i+1}", opcoes_epi, key=f"saida_epi_item_nome_{i}_{rs}", disabled=(not opcoes_epi))
             with col2:
                 st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"saida_epi_item_tam_{i}_{rs}")
             with col3:
                 st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"saida_epi_item_qtd_{i}_{rs}")
             with col4:
-                st.selectbox(f"Status #{i+1}", ["", "NOVO", "HIGIENIZADO"], key=f"saida_epi_item_status_{i}_{rs}")
+                st.selectbox(f"Status #{i+1}", opcoes_status, key=f"saida_epi_item_status_{i}_{rs}")
         
         st.markdown("---")
         st.markdown("### ✍️ Assinatura de Confirmação")

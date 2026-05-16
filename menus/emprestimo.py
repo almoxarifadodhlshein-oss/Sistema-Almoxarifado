@@ -180,6 +180,7 @@ def carregar():
 
     # --- Formulário de Empréstimo ---
     with st.form("emprestimo_form", clear_on_submit=False):
+        perfil_usuario = st.session_state.get("user_role", "visitante")
         
         st.markdown("**Identificação do Colaborador**")
 
@@ -190,21 +191,36 @@ def carregar():
             colaborador_value = st.text_input("Nome Completo", key=f"emprestimo_colaborador_{rs}")
         st.markdown("---")
 
+        if perfil_usuario == "visitante":
+            opcoes_responsavel = ["COORDENADOR"] # Bloqueia apenas em Coordenador
+        else:
+            opcoes_responsavel = ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"]
+        responsavel = st.selectbox("Responsável", opcoes_responsavel, key=f"emprestimo_responsavel_{rs}")#, disabled=(perfil_usuario == "visitante"))
+        
         coordenador = st.text_input("Coordenador", key=f"emprestimo_coordenador_{rs}")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key=f"emprestimo_email_coordenador_{rs}")
-        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key=f"emprestimo_responsavel_{rs}")
-        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO"], key=f"emprestimo_turno_{rs}")
+
+        if perfil_usuario == "visitante":
+            opcoes_turno = [""] + ["1° TURNO", "2° TURNO"] # Bloqueia a opção ADM para visitantes
+        else:
+            opcoes_turno = ["", "ADM", "1° TURNO", "2° TURNO"]
+        turno = st.selectbox("Turno", opcoes_turno, key=f"emprestimo_turno_{rs}")
+
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key=f"emprestimo_centro_de_custo_{rs}")
         
-        # O STATUS GERAL FOI REMOVIDO DAQUI
 
+        if perfil_usuario == "visitante":
+            opcoes_emprestimo = ["CALÇA OPERACIONAL", "COLETE LARANJA", "MOLETOM"]
+        else:
+            opcoes_emprestimo = epi_names
+        
         st.markdown("---")
         for i in range(num_itens):
             col1, col2, col3, col4 = st.columns([3, 1, 1, 1.5]) 
             
             with col1:
                 # CORREÇÃO: As chaves agora são 'emprestimo_...' em vez de 'saida_epi_...'
-                st.selectbox(f"EPI #{i+1}", [""] + epi_names, key=f"emprestimo_item_nome_{i}_{rs}", disabled=(not epi_names))
+                st.selectbox(f"EPI #{i+1}", [""] + opcoes_emprestimo, key=f"emprestimo_item_nome_{i}_{rs}", disabled=(not opcoes_emprestimo))
             with col2:
                 st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"emprestimo_item_tam_{i}_{rs}")
             with col3:

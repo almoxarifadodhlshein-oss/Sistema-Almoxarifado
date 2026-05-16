@@ -149,6 +149,7 @@ def carregar():
 
     # --- Formulário de Saída ---
     with st.form("saida_insumos_form", clear_on_submit=False): # Mudar para False
+        perfil_usuario = st.session_state.get("user_role", "visitante")
         
         st.markdown("**Identificação do Colaborador**")
         col_nome, col_cpf = st.columns(2)
@@ -159,15 +160,37 @@ def carregar():
         st.markdown("---")
         coordenador = st.text_input("Coordenador", key=f"saida_insumos_coordenador_{ri}")
         email_coordenador = st.selectbox("E-mail do Coordenador", options=[""] + coordenadores_emails, key=f"saida_insumos_email_coordenador_{ri}")
-        responsavel = st.selectbox("Responsável", ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"], key=f"saida_insumos_responsavel_{ri}")
-        turno = st.selectbox("Turno", ["", "ADM", "1° TURNO", "2° TURNO",], key=f"saida_insumos_turno_{ri}")
+        
+        # 2. Define a lista de opções com base no perfil
+        if perfil_usuario == "visitante":
+            opcoes_responsavel = ["COORDENADOR"] # Bloqueia apenas em Coordenador
+        else:
+            opcoes_responsavel = ["", "ALMOXARIFE", "COORDENADOR", "JOVEM APRENDIZ"]
+            
+        # 3. Desenha o campo com a lista correta
+        responsavel = st.selectbox("Responsável", opcoes_responsavel, key=f"saida_insumos_responsavel_{ri}")
+        
+        if perfil_usuario == "visitante":
+            opcoes_turno = ["", "1° TURNO", "2° TURNO"] # Bloqueia apenas em ADM
+        else:
+            opcoes_turno = ["", "ADM", "1° TURNO", "2° TURNO"]
+        turno = st.selectbox("Turno", opcoes_turno, key=f"saida_insumos_turno_{ri}")
+
         centro_de_custo = st.selectbox("Centro de Custo", ["", "RC", "3P"], key=f"saida_insumos_centro_de_custo_{ri}")
+
+        if perfil_usuario == "visitante":
+            opcoes_insumo = ["BICO DE PATO", "REFIL DO BICO DE PATO" "RIBBON CERA EASY WAX 110X450",
+                            "FOLHA SULFITE A4", "FITA DUREX 45MMX100M","ETIQUETA TERMICA 100X150", 
+                            "EMBALAGEM PP 320X400", "EMBALAGEM P 380X450", "EMBALAGEM M 380X470", 
+                            "EMABALAGEM G 500X600", "EMBALAGEM EXG 1000X600"] # Bloqueia a seleção de insumos para visitantes
+        else:
+            opcoes_insumo = insumo_names
 
         st.markdown("---")
         for i in range(num_itens):
             col1, col2, col3 = st.columns([3, 1, 1])
             with col1:
-                st.selectbox(f"Insumo #{i+1}", [""] + insumo_names, key=f"saida_insumos_item_nome_{i}_{ri}", disabled=(not insumo_names))
+                st.selectbox(f"Insumo #{i+1}", [""] + opcoes_insumo, key=f"saida_insumos_item_nome_{i}_{ri}", disabled=(not opcoes_insumo))
             with col2:
                 st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"saida_insumos_item_tam_{i}_{ri}")
             with col3:
