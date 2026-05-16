@@ -99,7 +99,7 @@ def carregar():
             df_epi = pd.DataFrame()
 
         if df_epi.empty:
-            st.success("Tudo limpo! Nenhuma solicitação de Saída de EPI pendente.")
+            st.success("Nenhuma solicitação de Saída de EPI pendente.")
         else:
             st.info(f"Você tem {len(df_epi)} solicitação(ões) pendente(s).")
             for index, row in df_epi.iterrows():
