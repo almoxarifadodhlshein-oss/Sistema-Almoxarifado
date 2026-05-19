@@ -232,6 +232,8 @@ else:
         "🔍 Visualizar Estoque": "visualizar_estoque",
         "📈 Relatórios": "relatorios",
         "📑 Auditoria de Colaboradores": "consulta_colaborador",
+        "📑 Controle de Equipamentos": "rf_controle",
+
     }
 
     if st.session_state.user_role in ["visitante"]:

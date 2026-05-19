@@ -11,7 +11,12 @@ from utils.rf_db import (
     registrar_verificacao,
     registrar_historico,
     obter_dashboard_rf,
-    obter_historico
+    obter_historico,
+    obter_sessao_ativa,
+    iniciar_sessao_semana,
+    finalizar_sessao_semana,
+    buscar_rfs_por_final,
+
 )
 
 
@@ -24,7 +29,7 @@ def carregar():
     tab1, tab2, tab3, tab4 = st.tabs([
         "Dashboard",
         "Cadastrar RF",
-        "Inventário",
+        "Auditoria Semanal",
         "Histórico"
     ])
 
@@ -45,6 +50,47 @@ def carregar():
         c5.metric("3P", dashboard["total_3p"])
 
         st.divider()
+
+        sessao = obter_sessao_ativa()
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+
+        with col2:
+
+            if not sessao:
+
+                if st.button(
+                        "▶️ Iniciar Auditoria Semanal",
+                        use_container_width=True
+                ):
+
+                    sucesso = iniciar_sessao_semana(
+                        st.session_state.get(
+                            "username",
+                            "Sistema"
+                        )
+                    )
+
+                    if sucesso:
+
+                        st.success(
+                            "Auditoria iniciada."
+                        )
+
+                        st.rerun()
+
+                    else:
+
+                        st.warning(
+                            "Já existe uma auditoria ativa."
+                        )
+
+            else:
+
+                st.success(
+                    f"Auditoria ativa "
+                    f"(Semana {sessao['semana']})"
+                )
 
         st.subheader("RFs Cadastrados")
 
@@ -161,19 +207,12 @@ def carregar():
                         )
 
     # =========================
-    # INVENTÁRIO
+    # Auditoria Semanal
     # =========================
 
     with tab3:
 
-        from utils.rf_db import (
-            obter_sessao_ativa,
-            iniciar_sessao_semana,
-            finalizar_sessao_semana,
-            buscar_rfs_por_final
-        )
-
-        st.subheader("Inventário Semanal")
+        st.subheader("Auditoria Semanal")
 
         usuario = st.session_state.get(
             "username",
@@ -182,58 +221,19 @@ def carregar():
 
         sessao = obter_sessao_ativa()
 
-        c1, c2 = st.columns(2)
-
-        # =========================
-        # INICIAR SESSÃO
-        # =========================
-
-        with c1:
-
-            if not sessao:
-
-                if st.button(
-                        "▶️ Iniciar Verificação Semanal",
-                        use_container_width=True
-                ):
-
-                    sucesso = iniciar_sessao_semana(
-                        usuario
-                    )
-
-                    if sucesso:
-
-                        st.success(
-                            "Verificação iniciada."
-                        )
-
-                        st.rerun()
-
-                    else:
-
-                        st.warning(
-                            "Já existe uma verificação ativa."
-                        )
-
-            else:
-
-                st.success(
-                    f"Verificação semanal ativa "
-                    f"(Semana {sessao['semana']})"
-                )
 
         # =========================
         # FINALIZAR SESSÃO
         # =========================
 
-        with c2:
 
-            if sessao:
 
-                if st.button(
-                        "✅ Finalizar Verificação",
-                        use_container_width=True
-                ):
+        if sessao:
+
+            if st.button(
+                "✅ Finalizar Verificação",
+                      use_container_width=True
+            ):
                     finalizar_sessao_semana(
                         usuario
                     )
@@ -254,7 +254,7 @@ def carregar():
 
             st.info(
                 "Aguardando início da "
-                "verificação semanal."
+                "auditoria semanal."
             )
 
         else:
