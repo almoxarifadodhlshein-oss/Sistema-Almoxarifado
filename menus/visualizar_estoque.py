@@ -165,16 +165,28 @@ def carregar():
 
     st.markdown("---")
     
-    # --- Exportação (O seu código continua aqui) ---
+    # --- Exportação Corrigida (Gravando os dados de verdade) ---
     if not df_filtrado.empty:
         col_btn, _ = st.columns([1, 4]) 
         with col_btn:
-            output = io.BytesIO()            
+            # 1. Cria o balde de bytes na memória
+            output = io.BytesIO()
+            
+            # 2. Escreve os dados do DataFrame no balde usando o motor do Excel (openpyxl)
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                # index=False evita criar aquela coluna de números 0, 1, 2... chata no Excel
+                df_filtrado.to_excel(writer, index=False, sheet_name='Estoque Atual')
+            
+            # 3. Agora SIM, recolhemos os bytes preenchidos com o relatório!
             processed_data = output.getvalue()
+            
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_name = f"relatorio_estoque_{timestamp}.xlsx"
+            
             st.download_button(
-                label="📥 Baixar Excel", data=processed_data, file_name=file_name,
+                label="📥 Baixar Excel", 
+                data=processed_data, 
+                file_name=file_name,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
