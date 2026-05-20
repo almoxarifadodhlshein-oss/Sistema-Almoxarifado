@@ -16,6 +16,10 @@ def init_rf_db():
 
     with engine.begin() as conn:
 
+        # =========================
+        # TABELA RFs
+        # =========================
+
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS rfs (
 
@@ -43,6 +47,31 @@ def init_rf_db():
             );
         """))
 
+        # =========================
+        # SESSÕES SEMANAIS
+        # =========================
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS rf_sessoes_semanais (
+
+                id SERIAL PRIMARY KEY,
+
+                semana VARCHAR(20) UNIQUE,
+
+                iniciada_por VARCHAR(100),
+
+                data_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                finalizada BOOLEAN DEFAULT FALSE,
+
+                data_finalizacao TIMESTAMP
+            );
+        """))
+
+        # =========================
+        # VERIFICAÇÕES
+        # =========================
+
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS rf_verificacoes (
 
@@ -50,7 +79,7 @@ def init_rf_db():
 
                 rf_id INTEGER REFERENCES rfs(id),
 
-                semana VARCHAR(20),
+                sessao_id INTEGER REFERENCES rf_sessoes_semanais(id),
 
                 data_verificacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -64,12 +93,18 @@ def init_rf_db():
             );
         """))
 
+        # =========================
+        # HISTÓRICO
+        # =========================
+
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS rf_historico (
 
                 id SERIAL PRIMARY KEY,
 
                 rf_id INTEGER REFERENCES rfs(id),
+
+                sessao_id INTEGER REFERENCES rf_sessoes_semanais(id),
 
                 acao VARCHAR(100),
 
@@ -92,46 +127,40 @@ def init_rf_db():
                 observacao TEXT
             );
         """))
-
         conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS rf_sessoes_semanais (
+              ALTER TABLE rf_historico
+              ADD COLUMN IF NOT EXISTS sessao_id INTEGER
+              REFERENCES rf_sessoes_semanais(id);
+              """))
 
-                id SERIAL PRIMARY KEY,
-
-                semana VARCHAR(20) UNIQUE,
-
-                iniciada_por VARCHAR(100),
-
-                data_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-                finalizada BOOLEAN DEFAULT FALSE,
-
-                data_finalizacao TIMESTAMP
-            );
-        """))
         # =========================
         # ÍNDICES PERFORMANCE
         # =========================
 
         conn.execute(text("""
-                          CREATE INDEX IF NOT EXISTS idx_rfs_codigo_rf
-                              ON rfs(codigo_rf);
-                          """))
+            CREATE INDEX IF NOT EXISTS idx_rfs_codigo_rf
+            ON rfs(codigo_rf);
+        """))
 
         conn.execute(text("""
-                          CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_semana
-                              ON rf_verificacoes(semana);
-                          """))
+            CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_sessao
+            ON rf_verificacoes(sessao_id);
+        """))
 
         conn.execute(text("""
-                          CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_rf_id
-                              ON rf_verificacoes(rf_id);
-                          """))
+            CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_rf_id
+            ON rf_verificacoes(rf_id);
+        """))
 
         conn.execute(text("""
-                          CREATE INDEX IF NOT EXISTS idx_rf_historico_rf_id
-                              ON rf_historico(rf_id);
-                          """))
+            CREATE INDEX IF NOT EXISTS idx_rf_historico_rf_id
+            ON rf_historico(rf_id);
+        """))
+
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_rf_historico_sessao
+            ON rf_historico(sessao_id);
+        """))
 
 
 # =========================
@@ -237,6 +266,7 @@ def registrar_historico(
     rf_id,
     acao,
     usuario,
+    sessao_id=None,
     status_anterior=None,
     status_novo=None,
     area_anterior=None,
@@ -254,6 +284,7 @@ def registrar_historico(
             INSERT INTO rf_historico (
 
                 rf_id,
+                sessao_id,
                 acao,
                 status_anterior,
                 status_novo,
@@ -268,6 +299,7 @@ def registrar_historico(
             VALUES (
 
                 :rf_id,
+                :sessao_id,
                 :acao,
                 :status_anterior,
                 :status_novo,
@@ -281,6 +313,7 @@ def registrar_historico(
         """), {
 
             "rf_id": rf_id,
+            "sessao_id": sessao_id,
             "acao": acao,
             "status_anterior": status_anterior,
             "status_novo": status_novo,
@@ -291,7 +324,6 @@ def registrar_historico(
             "usuario": usuario,
             "observacao": observacao
         })
-
 
 # =========================
 # VERIFICAÇÃO SEMANAL
@@ -306,7 +338,12 @@ def registrar_verificacao(
 
     engine = connect_db()
 
-    semana = datetime.now().strftime("%Y-W%U")
+    sessao = obter_sessao_ativa()
+
+    if not sessao:
+        return False
+
+    sessao_id = sessao["id"]
 
     with engine.begin() as conn:
 
@@ -314,11 +351,11 @@ def registrar_verificacao(
             SELECT id
             FROM rf_verificacoes
             WHERE rf_id = :rf_id
-            AND semana = :semana
+            AND sessao_id = :sessao_id
         """), {
 
             "rf_id": rf_id,
-            "semana": semana
+            "sessao_id": sessao_id
 
         }).fetchone()
 
@@ -329,7 +366,7 @@ def registrar_verificacao(
             INSERT INTO rf_verificacoes (
 
                 rf_id,
-                semana,
+                sessao_id,
                 usuario,
                 status_operacional,
                 observacao
@@ -338,7 +375,7 @@ def registrar_verificacao(
             VALUES (
 
                 :rf_id,
-                :semana,
+                :sessao_id,
                 :usuario,
                 :status_operacional,
                 :observacao
@@ -346,7 +383,7 @@ def registrar_verificacao(
         """), {
 
             "rf_id": rf_id,
-            "semana": semana,
+            "sessao_id": sessao_id,
             "usuario": usuario,
             "status_operacional": status_operacional,
             "observacao": observacao
@@ -363,6 +400,15 @@ def registrar_verificacao(
             "status": status_operacional,
             "rf_id": rf_id
         })
+
+    registrar_historico(
+        rf_id=rf_id,
+        sessao_id=sessao_id,
+        acao="Verificação Semanal",
+        usuario=usuario,
+        status_novo=status_operacional,
+        observacao=observacao
+    )
 
     return True
 
@@ -387,6 +433,10 @@ def obter_dashboard_rf():
             COUNT(*) FILTER (
                 WHERE status = 'Quebrado'
             ) AS quebrados,
+
+            COUNT(*) FILTER (
+                WHERE status = 'Ausente'
+            ) AS ausentes,
 
             COUNT(*) FILTER (
                 WHERE area_atual ILIKE '%RC%'
@@ -447,10 +497,9 @@ def obter_historico_sessao():
     sessao = obter_sessao_ativa()
 
     if not sessao:
-
         return pd.DataFrame()
 
-    query = """
+    query = text("""
         SELECT
 
             r.codigo_rf,
@@ -462,30 +511,21 @@ def obter_historico_sessao():
 
         FROM rf_historico h
 
-        LEFT JOIN rfs r
+        INNER JOIN rfs r
             ON r.id = h.rf_id
 
-        WHERE h.acao = 'Verificação Semanal'
-
-        AND DATE_TRUNC(
-            'week',
-            h.data_hora
-        ) = DATE_TRUNC(
-            'week',
-            CURRENT_DATE
-        )
+        WHERE h.sessao_id = :sessao_id
 
         ORDER BY h.data_hora DESC
-    """
+    """)
 
-    with engine.connect() as conn:
-
-        df = pd.read_sql(
-            text(query),
-            conn
-        )
-
-    return df
+    return pd.read_sql(
+        query,
+        engine,
+        params={
+            "sessao_id": sessao["id"]
+        }
+    )
 
 
 # =========================
@@ -567,9 +607,14 @@ def iniciar_sessao_semana(usuario):
 
 def finalizar_sessao_semana(usuario):
 
-    engine = connect_db()
+    sessao = obter_sessao_ativa()
 
-    semana = obter_semana_atual()
+    if not sessao:
+        return False
+
+    sessao_id = sessao["id"]
+
+    engine = connect_db()
 
     with engine.begin() as conn:
 
@@ -585,12 +630,12 @@ def finalizar_sessao_semana(usuario):
 
                 SELECT rf_id
                 FROM rf_verificacoes
-                WHERE semana = :semana
+                WHERE sessao_id = :sessao_id
             )
 
         """), {
 
-            "semana": semana
+            "sessao_id": sessao_id
 
         }).fetchall()
 
@@ -614,6 +659,7 @@ def finalizar_sessao_semana(usuario):
                 INSERT INTO rf_historico (
 
                     rf_id,
+                    sessao_id,
                     acao,
                     usuario,
                     status_anterior,
@@ -624,6 +670,7 @@ def finalizar_sessao_semana(usuario):
                 VALUES (
 
                     :rf_id,
+                    :sessao_id,
                     'Ausência Automática',
                     :usuario,
                     :status_anterior,
@@ -634,6 +681,7 @@ def finalizar_sessao_semana(usuario):
             """), {
 
                 "rf_id": rf_id,
+                "sessao_id": sessao_id,
                 "usuario": usuario,
                 "status_anterior": status_atual
             })
@@ -643,10 +691,10 @@ def finalizar_sessao_semana(usuario):
             SET
                 finalizada = TRUE,
                 data_finalizacao = CURRENT_TIMESTAMP
-            WHERE semana = :semana
+            WHERE id = :sessao_id
         """), {
 
-            "semana": semana
+            "sessao_id": sessao_id
         })
 
     return True
@@ -678,6 +726,7 @@ def buscar_rfs_por_final(final_rf):
         }
     )
 
+
 # =========================
 # HISTÓRICO DE AUDITORIAS
 # =========================
@@ -689,10 +738,9 @@ def obter_historico_auditorias():
     query = text("""
         SELECT
 
+            s.id,
             s.semana,
-
             s.iniciada_por,
-
             s.data_inicio,
 
             COUNT(*) FILTER (
@@ -716,17 +764,18 @@ def obter_historico_auditorias():
 
                     FROM rf_verificacoes
 
-                    WHERE semana = s.semana
+                    WHERE sessao_id = s.id
                 )
             ) AS ausentes
 
         FROM rf_sessoes_semanais s
 
         LEFT JOIN rf_verificacoes v
-            ON v.semana = s.semana
+            ON v.sessao_id = s.id
 
         GROUP BY
 
+            s.id,
             s.semana,
             s.iniciada_por,
             s.data_inicio
