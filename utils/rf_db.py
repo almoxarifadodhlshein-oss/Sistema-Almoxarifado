@@ -672,11 +672,30 @@ def obter_historico_auditorias():
 
             s.data_inicio,
 
-            s.data_finalizacao,
+            COUNT(*) FILTER (
+                WHERE v.status_operacional = 'Disponível'
+            ) AS disponiveis,
 
-            s.finalizada,
+            COUNT(*) FILTER (
+                WHERE v.status_operacional = 'Quebrado'
+            ) AS quebrados,
 
-            COUNT(v.id) AS total_verificados
+            (
+                SELECT COUNT(*)
+
+                FROM rfs r
+
+                WHERE r.ativo = TRUE
+
+                AND r.id NOT IN (
+
+                    SELECT rf_id
+
+                    FROM rf_verificacoes
+
+                    WHERE semana = s.semana
+                )
+            ) AS ausentes
 
         FROM rf_sessoes_semanais s
 
@@ -687,9 +706,7 @@ def obter_historico_auditorias():
 
             s.semana,
             s.iniciada_por,
-            s.data_inicio,
-            s.data_finalizacao,
-            s.finalizada
+            s.data_inicio
 
         ORDER BY s.data_inicio DESC
     """)
