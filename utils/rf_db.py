@@ -109,6 +109,29 @@ def init_rf_db():
                 data_finalizacao TIMESTAMP
             );
         """))
+        # =========================
+        # ÍNDICES PERFORMANCE
+        # =========================
+
+        conn.execute(text("""
+                          CREATE INDEX IF NOT EXISTS idx_rfs_codigo_rf
+                              ON rfs(codigo_rf);
+                          """))
+
+        conn.execute(text("""
+                          CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_semana
+                              ON rf_verificacoes(semana);
+                          """))
+
+        conn.execute(text("""
+                          CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_rf_id
+                              ON rf_verificacoes(rf_id);
+                          """))
+
+        conn.execute(text("""
+                          CREATE INDEX IF NOT EXISTS idx_rf_historico_rf_id
+                              ON rf_historico(rf_id);
+                          """))
 
 
 # =========================
