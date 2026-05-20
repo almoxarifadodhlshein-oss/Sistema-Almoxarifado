@@ -654,3 +654,44 @@ def buscar_rfs_por_final(final_rf):
             "busca": busca
         }
     )
+
+# =========================
+# HISTÓRICO DE AUDITORIAS
+# =========================
+
+def obter_historico_auditorias():
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT
+
+            s.semana,
+
+            s.iniciada_por,
+
+            s.data_inicio,
+
+            s.data_finalizacao,
+
+            s.finalizada,
+
+            COUNT(v.id) AS total_verificados
+
+        FROM rf_sessoes_semanais s
+
+        LEFT JOIN rf_verificacoes v
+            ON v.semana = s.semana
+
+        GROUP BY
+
+            s.semana,
+            s.iniciada_por,
+            s.data_inicio,
+            s.data_finalizacao,
+            s.finalizada
+
+        ORDER BY s.data_inicio DESC
+    """)
+
+    return pd.read_sql(query, engine)

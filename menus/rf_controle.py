@@ -16,7 +16,8 @@ from utils.rf_db import (
     iniciar_sessao_semana,
     finalizar_sessao_semana,
     buscar_rfs_por_final,
-    obter_historico_sessao
+    obter_historico_sessao,
+    obter_historico_auditorias
 
 )
 
@@ -428,12 +429,20 @@ def carregar():
 
     with tab4:
 
-        st.subheader("Histórico RF")
+        st.subheader("Histórico de Auditorias")
 
-        historico = obter_historico()
+        auditorias = obter_historico_auditorias()
 
-        st.dataframe(
-            historico,
-            use_container_width=True,
-            hide_index=True
-        )
+        if auditorias.empty:
+
+            st.info(
+                "Nenhuma auditoria encontrada."
+            )
+
+        else:
+
+            st.dataframe(
+                auditorias,
+                use_container_width=True,
+                hide_index=True
+            )
