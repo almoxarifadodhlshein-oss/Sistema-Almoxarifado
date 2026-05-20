@@ -93,6 +93,23 @@ def init_rf_db():
             );
         """))
 
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS rf_sessoes_semanais (
+
+                id SERIAL PRIMARY KEY,
+
+                semana VARCHAR(20) UNIQUE,
+
+                iniciada_por VARCHAR(100),
+
+                data_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                finalizada BOOLEAN DEFAULT FALSE,
+
+                data_finalizacao TIMESTAMP
+            );
+        """))
+
 
 # =========================
 # CADASTRO RF
@@ -366,7 +383,7 @@ def obter_dashboard_rf():
 
 
 # =========================
-# HISTÓRICO
+# HISTÓRICO GERAL
 # =========================
 
 def obter_historico():
@@ -394,6 +411,59 @@ def obter_historico():
     """)
 
     return pd.read_sql(query, engine)
+
+
+# =========================
+# HISTÓRICO DA SESSÃO
+# =========================
+
+def obter_historico_sessao():
+
+    engine = connect_db()
+
+    sessao = obter_sessao_ativa()
+
+    if not sessao:
+
+        return pd.DataFrame()
+
+    query = """
+        SELECT
+
+            r.codigo_rf,
+            r.numero,
+            h.status_novo,
+            h.usuario,
+            h.observacao,
+            h.data_hora
+
+        FROM rf_historico h
+
+        LEFT JOIN rfs r
+            ON r.id = h.rf_id
+
+        WHERE h.acao = 'Verificação Semanal'
+
+        AND DATE_TRUNC(
+            'week',
+            h.data_hora
+        ) = DATE_TRUNC(
+            'week',
+            CURRENT_DATE
+        )
+
+        ORDER BY h.data_hora DESC
+    """
+
+    with engine.connect() as conn:
+
+        df = pd.read_sql(
+            text(query),
+            conn
+        )
+
+    return df
+
 
 # =========================
 # SESSÃO SEMANAL
@@ -480,7 +550,6 @@ def finalizar_sessao_semana(usuario):
 
     with engine.begin() as conn:
 
-        # RFs NÃO verificados
         nao_verificados = conn.execute(text("""
 
             SELECT r.id, r.status
@@ -507,7 +576,6 @@ def finalizar_sessao_semana(usuario):
             rf_id = rf[0]
             status_atual = rf[1]
 
-            # quebrado continua quebrado
             if status_atual == "Quebrado":
                 continue
 

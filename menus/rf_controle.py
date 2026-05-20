@@ -16,6 +16,7 @@ from utils.rf_db import (
     iniciar_sessao_semana,
     finalizar_sessao_semana,
     buscar_rfs_por_final,
+    obter_historico_sessao
 
 )
 
@@ -395,6 +396,30 @@ def carregar():
                                     )
 
                                     st.rerun()
+                            st.divider()
+
+                            st.subheader(
+                                "Histórico da Auditoria Atual"
+                            )
+
+                            historico_sessao = (
+                                obter_historico_sessao()
+                            )
+
+                            if not historico_sessao.empty:
+
+                                st.dataframe(
+                                    historico_sessao,
+                                    use_container_width=True,
+                                    hide_index=True
+                                )
+
+                            else:
+
+                                st.info(
+                                    "Nenhuma verificação "
+                                    "realizada nesta auditoria."
+                                )
 
 
     # =========================
