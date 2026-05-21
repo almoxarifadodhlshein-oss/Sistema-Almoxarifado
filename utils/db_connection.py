@@ -1,13 +1,23 @@
-# Em utils/db_connection.py
-import streamlit as st
-import sqlalchemy
+# utils/db_connection.py
 
-# Usa o cache de recursos do Streamlit para criar a conexão apenas uma vez
+import streamlit as st
+from sqlalchemy import create_engine
+
+
 @st.cache_resource
 def connect_db():
-    """Conecta-se ao banco de dados PostgreSQL usando a connection string."""
-    # A forma segura de guardar a senha é usando os "Secrets" do Streamlit.
-    # Por enquanto, podemos colocar direto, mas vamos mudar isso na hora de hospedar.
+
     connection_uri = st.secrets["postgres_uri"]
-    engine = sqlalchemy.create_engine(connection_uri)
+
+    engine = create_engine(
+
+        connection_uri,
+
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+        pool_recycle=300
+
+    )
+
     return engine
