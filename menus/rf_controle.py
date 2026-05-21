@@ -275,19 +275,8 @@ def carregar():
             if busca:
 
                 resultados = buscar_rfs_por_final(
-                    busca
+                    busca.strip().upper()
                 )
-
-                if resultados.empty:
-
-                    rf = buscar_rf_por_codigo(
-                        busca
-                    )
-
-                    if rf:
-                        resultados = pd.DataFrame(
-                            [rf]
-                        )
 
                 if resultados.empty:
 
