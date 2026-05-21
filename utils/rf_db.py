@@ -248,14 +248,16 @@ def buscar_rf_por_codigo(codigo_rf):
         LIMIT 1
     """)
 
-    df = pd.read_sql(query, engine, params={
-        "codigo_rf": codigo_rf.strip().upper()
-    })
+    with engine.connect() as conn:
 
-    if df.empty:
+        result = conn.execute(query, {
+            "codigo_rf": str(codigo_rf).strip().upper()
+        }).fetchone()
+
+    if not result:
         return None
 
-    return df.iloc[0].to_dict()
+    return dict(result._mapping)
 
 
 # =========================
