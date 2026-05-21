@@ -270,6 +270,8 @@ def carregar():
                 "Código RF"
             )
 
+            historico_sessao = obter_historico_sessao()
+
             if busca:
 
                 resultados = buscar_rfs_por_final(
@@ -377,72 +379,33 @@ def carregar():
 
                                 else:
 
-                                    registrar_historico(
-
-                                        rf_id=rf["id"],
-
-                                        acao="Verificação Semanal",
-
-                                        usuario=usuario,
-
-                                        status_anterior=rf["status"],
-
-                                        status_novo=novo_status,
-
-                                        observacao=observacao
-                                    )
-
                                     st.success(
                                         "Verificação registrada."
                                     )
 
                                     st.rerun()
+
                             st.divider()
 
-                            st.subheader(
-                                "Histórico da Auditoria Atual"
-                            )
+            # =========================
+            # HISTÓRICO DA AUDITORIA
+            # =========================
 
-                            historico_sessao = (
-                                obter_historico_sessao()
-                            )
-
-                            if not historico_sessao.empty:
-
-                                st.dataframe(
-                                    historico_sessao,
-                                    use_container_width=True,
-                                    hide_index=True
-                                )
-
-                            else:
-
-                                st.info(
-                                    "Nenhuma verificação "
-                                    "realizada nesta auditoria."
-                                )
-
-
-    # =========================
-    # HISTÓRICO
-    # =========================
-
-    with tab4:
-
-        st.subheader("Histórico de Auditorias")
-
-        auditorias = obter_historico_auditorias()
-
-        if auditorias.empty:
-
-            st.info(
-                "Nenhuma auditoria encontrada."
+            st.subheader(
+                "Histórico da Auditoria Atual"
             )
 
-        else:
+            if not historico_sessao.empty:
 
-            st.dataframe(
-                auditorias,
-                use_container_width=True,
-                hide_index=True
-            )
+                st.dataframe(
+                    historico_sessao,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+            else:
+
+                st.info(
+                    "Nenhuma verificação "
+                    "realizada nesta auditoria."
+                )
