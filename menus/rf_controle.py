@@ -398,3 +398,26 @@ def carregar():
                     "Nenhuma verificação "
                     "realizada nesta auditoria."
                 )
+# =========================
+# HISTÓRICO
+# =========================
+
+    with tab4:
+
+        st.subheader("Histórico de Auditorias")
+
+        auditorias = obter_historico_auditorias()
+
+        if auditorias.empty:
+
+            st.info(
+                "Nenhuma auditoria encontrada."
+            )
+
+        else:
+
+            st.dataframe(
+                auditorias,
+                use_container_width=True,
+                hide_index=True
+            )
