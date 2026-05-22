@@ -1,10 +1,23 @@
-# Em main.py (VERSÃO FINAL CORRIGIDA)
+
 
 import streamlit as st
 import hashlib
 from PIL import Image
 import base64
 from pathlib import Path
+from utils.rf_db import init_rf_db
+
+# --- CONFIGURAÇÕES DA PÁGINA ---
+
+st.set_page_config(
+    page_title="Controle de Almoxarifado DHL",
+    page_icon="https://www.dhl.com/etc/clientlibs/dhl/clientlib-all/assets/favicon.ico",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# INIT DB
+init_rf_db()
 
 # --- FUNÇÕES DE AJUDA ---
 @st.cache_data
@@ -24,14 +37,7 @@ def carregar_css(nome_arquivo):
     except FileNotFoundError:
         st.error(f"Arquivo CSS '{nome_arquivo}' não encontrado.")
 
-# --- CONFIGURAÇÕES DA PÁGINA ---
-# Esta deve ser a PRIMEIRA chamada Streamlit no seu script
-st.set_page_config(
-    page_title="Controle de Almoxarifado DHL",
-    page_icon="https://www.dhl.com/etc/clientlibs/dhl/clientlib-all/assets/favicon.ico",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+
 
 # Carrega o CSS a partir do arquivo externo
 carregar_css("modelo.css")

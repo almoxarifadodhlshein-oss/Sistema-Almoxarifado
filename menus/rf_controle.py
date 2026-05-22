@@ -24,7 +24,7 @@ from utils.rf_db import (
 
 def carregar():
 
-    init_rf_db()
+
 
     st.title("📡 Controle de RFs")
 
