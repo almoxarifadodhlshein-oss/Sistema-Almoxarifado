@@ -140,34 +140,54 @@ def init_rf_db():
         # =========================
 
         conn.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_rfs_codigo_rf
-            ON rfs(codigo_rf);
-        """))
+              CREATE INDEX IF NOT EXISTS idx_rfs_codigo_rf
+                  ON rfs(codigo_rf);
+              """))
 
         conn.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_rfs_codigo_rf_upper
-            ON rfs(UPPER(codigo_rf));
-        """))
+              CREATE INDEX IF NOT EXISTS idx_rfs_codigo_rf_upper
+                  ON rfs(UPPER (codigo_rf));
+              """))
 
         conn.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_sessao
-            ON rf_verificacoes(sessao_id);
-        """))
+              CREATE INDEX IF NOT EXISTS idx_rfs_ativo
+                  ON rfs(ativo);
+              """))
 
         conn.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_rf_id
-            ON rf_verificacoes(rf_id);
-        """))
+              CREATE INDEX IF NOT EXISTS idx_rfs_status
+                  ON rfs(status);
+              """))
 
         conn.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_rf_historico_rf_id
-            ON rf_historico(rf_id);
-        """))
+              CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_sessao
+                  ON rf_verificacoes(sessao_id);
+              """))
 
         conn.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_rf_historico_sessao
-            ON rf_historico(sessao_id);
-        """))
+              CREATE INDEX IF NOT EXISTS idx_rf_verificacoes_rf_id
+                  ON rf_verificacoes(rf_id);
+              """))
+
+        conn.execute(text("""
+              CREATE UNIQUE INDEX IF NOT EXISTS idx_rf_verificacoes_unico
+                  ON rf_verificacoes(rf_id, sessao_id);
+              """))
+
+        conn.execute(text("""
+              CREATE INDEX IF NOT EXISTS idx_rf_historico_rf_id
+                  ON rf_historico(rf_id);
+              """))
+
+        conn.execute(text("""
+              CREATE INDEX IF NOT EXISTS idx_rf_historico_sessao
+                  ON rf_historico(sessao_id);
+              """))
+
+        conn.execute(text("""
+              CREATE INDEX IF NOT EXISTS idx_rf_historico_data_hora
+                  ON rf_historico(data_hora DESC);
+              """))
 
 
 # =========================
@@ -362,11 +382,16 @@ def registrar_verificacao(
 
     with engine.begin() as conn:
 
+        # ====================================
+        # VERIFICA SE JÁ EXISTE VERIFICAÇÃO
+        # ====================================
+
         existe = conn.execute(text("""
-            SELECT id
+            SELECT 1
             FROM rf_verificacoes
             WHERE rf_id = :rf_id
             AND sessao_id = :sessao_id
+            LIMIT 1
         """), {
 
             "rf_id": rf_id,
@@ -376,6 +401,10 @@ def registrar_verificacao(
 
         if existe:
             return False
+
+        # ====================================
+        # INSERE VERIFICAÇÃO
+        # ====================================
 
         conn.execute(text("""
             INSERT INTO rf_verificacoes (
@@ -404,6 +433,10 @@ def registrar_verificacao(
             "observacao": observacao
         })
 
+        # ====================================
+        # ATUALIZA RF
+        # ====================================
+
         conn.execute(text("""
             UPDATE rfs
             SET
@@ -416,18 +449,42 @@ def registrar_verificacao(
             "rf_id": rf_id
         })
 
-    registrar_historico(
-        rf_id=rf_id,
-        sessao_id=sessao_id,
-        acao="Verificação Semanal",
-        usuario=usuario,
-        status_novo=status_operacional,
-        observacao=observacao
-    )
+        # ====================================
+        # HISTÓRICO
+        # ====================================
 
+        conn.execute(text("""
+            INSERT INTO rf_historico (
+
+                rf_id,
+                sessao_id,
+                acao,
+                usuario,
+                status_novo,
+                observacao
+
+            )
+            VALUES (
+
+                :rf_id,
+                :sessao_id,
+                'Verificação Semanal',
+                :usuario,
+                :status_novo,
+                :observacao
+            )
+        """), {
+
+            "rf_id": rf_id,
+            "sessao_id": sessao_id,
+            "usuario": usuario,
+            "status_novo": status_operacional,
+            "observacao": observacao
+        })
+
+    st.cache_data.clear()
 
     return True
-
 
 # =========================
 # DASHBOARD
