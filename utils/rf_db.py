@@ -189,6 +189,11 @@ def init_rf_db():
                   ON rf_historico(data_hora DESC);
               """))
 
+        conn.execute(text("""
+              CREATE INDEX IF NOT EXISTS idx_rf_sessoes_semanais
+                  ON rf_sessoes_semanais(semana, finalizada);
+              """))
+
 
 # =========================
 # CADASTRO RF
@@ -250,19 +255,32 @@ def cadastrar_rf(
 # =========================
 
 
+@st.cache_data(ttl=30)
 def listar_rfs():
 
     engine = connect_db()
 
     query = text("""
-        SELECT *
+        SELECT
+
+            id,
+            numero,
+            codigo_rf,
+            modelo,
+            marca,
+            status,
+            area_atual,
+            responsavel_atual,
+            ultima_verificacao
+
         FROM rfs
+
         WHERE ativo = TRUE
+
         ORDER BY codigo_rf
     """)
 
     return pd.read_sql(query, engine)
-
 
 # =========================
 # BUSCAR RF
@@ -383,30 +401,10 @@ def registrar_verificacao(
     with engine.begin() as conn:
 
         # ====================================
-        # VERIFICA SE JÁ EXISTE VERIFICAÇÃO
+        # INSERT DIRETO COM PROTEÇÃO DUPLICADA
         # ====================================
 
-        existe = conn.execute(text("""
-            SELECT 1
-            FROM rf_verificacoes
-            WHERE rf_id = :rf_id
-            AND sessao_id = :sessao_id
-            LIMIT 1
-        """), {
-
-            "rf_id": rf_id,
-            "sessao_id": sessao_id
-
-        }).fetchone()
-
-        if existe:
-            return False
-
-        # ====================================
-        # INSERE VERIFICAÇÃO
-        # ====================================
-
-        conn.execute(text("""
+        resultado = conn.execute(text("""
             INSERT INTO rf_verificacoes (
 
                 rf_id,
@@ -424,6 +422,11 @@ def registrar_verificacao(
                 :status_operacional,
                 :observacao
             )
+
+            ON CONFLICT (rf_id, sessao_id)
+            DO NOTHING
+
+            RETURNING id
         """), {
 
             "rf_id": rf_id,
@@ -431,7 +434,14 @@ def registrar_verificacao(
             "usuario": usuario,
             "status_operacional": status_operacional,
             "observacao": observacao
-        })
+        }).fetchone()
+
+        # ====================================
+        # JÁ EXISTE VERIFICAÇÃO
+        # ====================================
+
+        if not resultado:
+            return False
 
         # ====================================
         # ATUALIZA RF
@@ -482,15 +492,13 @@ def registrar_verificacao(
             "observacao": observacao
         })
 
-    st.cache_data.clear()
-
     return True
 
 # =========================
 # DASHBOARD
 # =========================
 
-
+@st.cache_data(ttl=15)
 def obter_dashboard_rf():
 
     engine = connect_db()
@@ -521,14 +529,13 @@ def obter_dashboard_rf():
             ) AS total_3p
 
         FROM rfs
+
         WHERE ativo = TRUE
     """)
 
     df = pd.read_sql(query, engine)
 
     return df.iloc[0].to_dict()
-
-
 # =========================
 # HISTÓRICO GERAL
 # =========================
@@ -565,6 +572,7 @@ def obter_historico():
 # =========================
 
 
+@st.cache_data(ttl=5)
 def obter_historico_sessao():
 
     engine = connect_db()
@@ -592,6 +600,8 @@ def obter_historico_sessao():
         WHERE h.sessao_id = :sessao_id
 
         ORDER BY h.data_hora DESC
+
+        LIMIT 200
     """)
 
     return pd.read_sql(
@@ -601,7 +611,6 @@ def obter_historico_sessao():
             "sessao_id": sessao["id"]
         }
     )
-
 
 # =========================
 # SESSÃO SEMANAL
@@ -782,17 +791,32 @@ def finalizar_sessao_semana(usuario):
 # BUSCA POR FINAL
 # =========================
 
-
+@st.cache_data(ttl=10)
 def buscar_rfs_por_final(final_rf):
 
     engine = connect_db()
 
     query = text("""
-        SELECT *
+        SELECT
+
+            id,
+            numero,
+            codigo_rf,
+            modelo,
+            marca,
+            status,
+            area_atual,
+            responsavel_atual,
+            ultima_verificacao
+
         FROM rfs
+
         WHERE codigo_rf ILIKE :busca
         AND ativo = TRUE
+
         ORDER BY codigo_rf
+
+        LIMIT 50
     """)
 
     busca = f"%{final_rf.strip().upper()}"
@@ -805,12 +829,12 @@ def buscar_rfs_por_final(final_rf):
         }
     )
 
-
 # =========================
 # HISTÓRICO DE AUDITORIAS
 # =========================
 
 
+@st.cache_data(ttl=30)
 def obter_historico_auditorias():
 
     engine = connect_db()
@@ -823,11 +847,11 @@ def obter_historico_auditorias():
             s.iniciada_por,
             s.data_inicio,
 
-            COUNT(*) FILTER (
+            COUNT(v.id) FILTER (
                 WHERE v.status_operacional = 'Disponível'
             ) AS disponiveis,
 
-            COUNT(*) FILTER (
+            COUNT(v.id) FILTER (
                 WHERE v.status_operacional = 'Quebrado'
             ) AS quebrados,
 
@@ -838,13 +862,14 @@ def obter_historico_auditorias():
 
                 WHERE r.ativo = TRUE
 
-                AND r.id NOT IN (
+                AND NOT EXISTS (
 
-                    SELECT rf_id
+                    SELECT 1
 
-                    FROM rf_verificacoes
+                    FROM rf_verificacoes rv
 
-                    WHERE sessao_id = s.id
+                    WHERE rv.rf_id = r.id
+                    AND rv.sessao_id = s.id
                 )
             ) AS ausentes
 
