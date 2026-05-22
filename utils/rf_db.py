@@ -222,14 +222,14 @@ def cadastrar_rf(
 
         })
 
-    st.cache_data.clear()
+
 
 
 # =========================
 # LISTAGEM RF
 # =========================
 
-@st.cache_data(ttl=60)
+
 def listar_rfs():
 
     engine = connect_db()
@@ -338,7 +338,7 @@ def registrar_historico(
             "observacao": observacao
         })
 
-    st.cache_data.clear()
+
 
 # =========================
 # VERIFICAÇÃO SEMANAL
@@ -425,7 +425,6 @@ def registrar_verificacao(
         observacao=observacao
     )
 
-    st.cache_data.clear()
 
     return True
 
@@ -434,7 +433,7 @@ def registrar_verificacao(
 # DASHBOARD
 # =========================
 
-@st.cache_data(ttl=30)
+
 def obter_dashboard_rf():
 
     engine = connect_db()
@@ -508,7 +507,7 @@ def obter_historico():
 # HISTÓRICO DA SESSÃO
 # =========================
 
-@st.cache_data(ttl=10)
+
 def obter_historico_sessao():
 
     engine = connect_db()
@@ -556,7 +555,7 @@ def obter_semana_atual():
     return datetime.now().strftime("%Y-W%U")
 
 
-@st.cache_data(ttl=10)
+
 def obter_sessao_ativa():
 
     engine = connect_db()
@@ -622,7 +621,7 @@ def iniciar_sessao_semana(usuario):
             "usuario": usuario
         })
 
-    st.cache_data.clear()
+
     return True
 
 
@@ -718,7 +717,7 @@ def finalizar_sessao_semana(usuario):
             "sessao_id": sessao_id
         })
 
-    st.cache_data.clear()
+
     return True
 
 
@@ -726,7 +725,7 @@ def finalizar_sessao_semana(usuario):
 # BUSCA POR FINAL
 # =========================
 
-@st.cache_data(ttl=5)
+
 def buscar_rfs_por_final(final_rf):
 
     engine = connect_db()
@@ -754,7 +753,7 @@ def buscar_rfs_por_final(final_rf):
 # HISTÓRICO DE AUDITORIAS
 # =========================
 
-@st.cache_data(ttl=60)
+
 def obter_historico_auditorias():
 
     engine = connect_db()
