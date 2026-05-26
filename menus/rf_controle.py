@@ -20,7 +20,21 @@ from utils.rf_db import (
     obter_historico_auditorias
 
 )
+from utils.rf_queries import (
+    obter_evolucao_semanal,
+    obter_disponibilidade_por_area,
+    obter_disponibilidade_por_marca
+)
 
+from utils.rf_analytics import (
+    calcular_percentuais
+)
+
+from utils.rf_charts import (
+    grafico_evolucao,
+    grafico_area,
+    grafico_marca
+)
 
 def carregar():
 
@@ -28,11 +42,12 @@ def carregar():
 
     st.title("📡 Controle de RFs")
 
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Dashboard",
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "RFs",
         "Cadastrar RF",
         "Auditoria Semanal",
-        "Histórico"
+        "Histórico",
+        "Dashboard"
     ])
 
     # =========================
@@ -421,3 +436,63 @@ def carregar():
                 use_container_width=True,
                 hide_index=True
             )
+    with tab5:
+
+        st.subheader("Analytics RF")
+
+        # ======================================
+        # EVOLUÇÃO SEMANAL
+        # ======================================
+
+        df_evolucao = obter_evolucao_semanal()
+
+        fig = grafico_evolucao(df_evolucao)
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        st.divider()
+
+        # ======================================
+        # ÁREA
+        # ======================================
+
+        df_area = obter_disponibilidade_por_area()
+
+        df_area = calcular_percentuais(df_area)
+
+        fig_area = grafico_area(df_area)
+
+        st.plotly_chart(
+            fig_area,
+            use_container_width=True
+        )
+
+        st.dataframe(
+            df_area,
+            use_container_width=True
+        )
+
+        st.divider()
+
+        # ======================================
+        # MARCA
+        # ======================================
+
+        df_marca = obter_disponibilidade_por_marca()
+
+        df_marca = calcular_percentuais(df_marca)
+
+        fig_marca = grafico_marca(df_marca)
+
+        st.plotly_chart(
+            fig_marca,
+            use_container_width=True
+        )
+
+        st.dataframe(
+            df_marca,
+            use_container_width=True
+        )

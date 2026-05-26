@@ -43,7 +43,7 @@ def grafico_area(df):
 
         orientation="h",
 
-        title="Disponibilidade por Área",
+        title="Disponibilidade por Site",
 
         hover_data=[
             "total",
