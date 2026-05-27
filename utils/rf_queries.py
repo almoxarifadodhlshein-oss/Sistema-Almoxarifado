@@ -124,6 +124,71 @@ def obter_disponibilidade_por_area(
         }
     )
 
+@st.cache_data(ttl=30)
+def obter_evolucao_por_area(
+    data_inicio=None,
+    data_fim=None
+):
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT
+
+            s.semana,
+
+            r.area_atual,
+
+            COUNT(*) AS total,
+
+            COUNT(*) FILTER (
+                WHERE v.status_operacional = 'Disponível'
+            ) AS disponiveis
+
+        FROM rf_verificacoes v
+
+        INNER JOIN rfs r
+            ON r.id = v.rf_id
+
+        INNER JOIN rf_sessoes_semanais s
+            ON s.id = v.sessao_id
+
+        WHERE s.data_inicio::date
+        BETWEEN :data_inicio
+        AND :data_fim
+
+        GROUP BY
+
+            s.semana,
+            r.area_atual
+
+        ORDER BY
+
+            s.semana,
+            r.area_atual
+    """)
+
+    df = pd.read_sql(
+
+        query,
+
+        engine,
+
+        params={
+
+            "data_inicio": data_inicio,
+            "data_fim": data_fim
+        }
+    )
+
+    if df.empty:
+        return df
+
+    df["percentual_disponibilidade"] = (
+        df["disponiveis"] / df["total"] * 100
+    ).round(2)
+
+    return df
 
 
 # DISPONIBILIDADE POR MARCA
@@ -184,3 +249,68 @@ def obter_disponibilidade_por_marca(
             "data_fim": data_fim
         }
     )
+@st.cache_data(ttl=30)
+def obter_evolucao_por_marca(
+    data_inicio=None,
+    data_fim=None
+):
+
+    engine = connect_db()
+
+    query = text("""
+        SELECT
+
+            s.semana,
+
+            r.marca,
+
+            COUNT(*) AS total,
+
+            COUNT(*) FILTER (
+                WHERE v.status_operacional = 'Disponível'
+            ) AS disponiveis
+
+        FROM rf_verificacoes v
+
+        INNER JOIN rfs r
+            ON r.id = v.rf_id
+
+        INNER JOIN rf_sessoes_semanais s
+            ON s.id = v.sessao_id
+
+        WHERE s.data_inicio::date
+        BETWEEN :data_inicio
+        AND :data_fim
+
+        GROUP BY
+
+            s.semana,
+            r.marca
+
+        ORDER BY
+
+            s.semana,
+            r.marca
+    """)
+
+    df = pd.read_sql(
+
+        query,
+
+        engine,
+
+        params={
+
+            "data_inicio": data_inicio,
+            "data_fim": data_fim
+        }
+    )
+
+    if df.empty:
+        return df
+
+    df["percentual_disponibilidade"] = (
+        df["disponiveis"] / df["total"] * 100
+    ).round(2)
+
+    return df

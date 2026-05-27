@@ -132,3 +132,67 @@ def grafico_marca(df):
     )
 
     return fig
+
+# ==========================================
+# EVOLUÇÃO POR ÁREA
+# ==========================================
+
+def grafico_evolucao_area(df):
+
+    fig = px.line(
+
+        df,
+
+        x="semana",
+
+        y="percentual_disponibilidade",
+
+        color="area_atual",
+
+        markers=True,
+
+        title="Evolução Semanal por Área"
+    )
+
+    fig.update_layout(
+
+        yaxis_title="% Disponibilidade",
+
+        xaxis_title="Semana",
+
+        hovermode="x unified"
+    )
+
+    return fig
+
+# ==========================================
+# EVOLUÇÃO POR MARCA
+# ==========================================
+
+def grafico_evolucao_marca(df):
+
+    fig = px.line(
+
+        df,
+
+        x="semana",
+
+        y="percentual_disponibilidade",
+
+        color="marca",
+
+        markers=True,
+
+        title="Evolução Semanal por Marca"
+    )
+
+    fig.update_layout(
+
+        yaxis_title="% Disponibilidade",
+
+        xaxis_title="Semana",
+
+        hovermode="x unified"
+    )
+
+    return fig

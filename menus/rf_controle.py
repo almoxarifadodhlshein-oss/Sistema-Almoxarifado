@@ -23,7 +23,9 @@ from utils.rf_db import (
 from utils.rf_queries import (
     obter_evolucao_semanal,
     obter_disponibilidade_por_area,
-    obter_disponibilidade_por_marca
+    obter_disponibilidade_por_marca,
+    obter_evolucao_por_area,
+    obter_evolucao_por_marca
 )
 
 from utils.rf_analytics import (
@@ -33,7 +35,9 @@ from utils.rf_analytics import (
 from utils.rf_charts import (
     grafico_evolucao,
     grafico_area,
-    grafico_marca
+    grafico_marca,
+    grafico_evolucao_area,
+    grafico_evolucao_marca
 )
 
 def carregar():
@@ -439,81 +443,234 @@ def carregar():
     with tab5:
 
         st.subheader("Analytics RF")
+        
+        # FILTROS
 
-        col1, col2 = st.columns(2)
+        with st.container(border=True):
+            st.markdown("### Filtros")
 
-        with col1:
-            data_inicio = st.date_input(
-                "Data inicial"
-            )
+            col1, col2 = st.columns(2)
 
-        with col2:
-            data_fim = st.date_input(
-                "Data final"
-            )
+            with col1:
+                data_inicio = st.date_input(
+                    "Data inicial"
+                )
+
+            with col2:
+                data_fim = st.date_input(
+                    "Data final"
+                )
+
+        st.divider()
 
         # ======================================
-        # EVOLUÇÃO SEMANAL
+        # VISÃO GERAL
         # ======================================
+
+        st.header("Visão Geral")
+
+        st.subheader(
+            "Evolução Geral das Auditorias"
+        )
 
         df_evolucao = obter_evolucao_semanal(
             data_inicio,
             data_fim
         )
 
-        fig = grafico_evolucao(df_evolucao)
+        fig = grafico_evolucao(
+            df_evolucao
+        )
 
         st.plotly_chart(
             fig,
             use_container_width=True
         )
 
+        st.dataframe(
+            df_evolucao,
+            use_container_width=True,
+            hide_index=True
+        )
+
         st.divider()
+
+        # ======================================
+        # STATUS ATUAL
+        # ======================================
+
+        st.header("Status Atual dos RFs")
+
+        col_area, col_marca = st.columns(2)
 
         # ======================================
         # ÁREA
         # ======================================
 
-        df_area = obter_disponibilidade_por_area(
-            data_inicio,
-            data_fim
-        )
+        with col_area:
+            st.subheader(
+                "Disponibilidade Atual por Área"
+            )
 
-        df_area = calcular_percentuais(df_area)
+            df_area = obter_disponibilidade_por_area()
 
-        fig_area = grafico_area(df_area)
+            df_area = calcular_percentuais(
+                df_area
+            )
 
-        st.plotly_chart(
-            fig_area,
-            use_container_width=True
-        )
+            fig_area = grafico_area(
+                df_area
+            )
 
-        st.dataframe(
-            df_area,
-            use_container_width=True
-        )
+            st.plotly_chart(
+                fig_area,
+                use_container_width=True
+            )
 
-        st.divider()
+            st.dataframe(
+
+                df_area[
+                    [
+                        "area_atual",
+                        "total",
+                        "disponiveis",
+                        "disponiveis_%",
+                        "quebrados",
+                        "quebrados_%",
+                        "ausentes",
+                        "ausentes_%"
+                    ]
+                ],
+
+                use_container_width=True,
+                hide_index=True
+            )
 
         # ======================================
         # MARCA
         # ======================================
 
-        df_marca = obter_disponibilidade_por_marca(
+        with col_marca:
+            st.subheader(
+                "Disponibilidade Atual por Marca"
+            )
+
+            df_marca = obter_disponibilidade_por_marca()
+
+            df_marca = calcular_percentuais(
+                df_marca
+            )
+
+            fig_marca = grafico_marca(
+                df_marca
+            )
+
+            st.plotly_chart(
+                fig_marca,
+                use_container_width=True
+            )
+
+            st.dataframe(
+
+                df_marca[
+                    [
+                        "marca",
+                        "total",
+                        "disponiveis",
+                        "disponiveis_%",
+                        "quebrados",
+                        "quebrados_%",
+                        "ausentes",
+                        "ausentes_%"
+                    ]
+                ],
+
+                use_container_width=True,
+                hide_index=True
+            )
+
+        st.divider()
+
+        # ======================================
+        # ACOMPANHAMENTO EVOLUTIVO
+        # ======================================
+
+        st.header("Acompanhamento Evolutivo")
+
+        # ======================================
+        # EVOLUÇÃO POR ÁREA
+        # ======================================
+
+        st.subheader(
+            "Evolução Semanal por Área"
+        )
+
+        df_evolucao_area = obter_evolucao_por_area(
             data_inicio,
             data_fim
         )
 
-        df_marca = calcular_percentuais(df_marca)
-
-        fig_marca = grafico_marca(df_marca)
+        fig_evolucao_area = grafico_evolucao_area(
+            df_evolucao_area
+        )
 
         st.plotly_chart(
-            fig_marca,
+            fig_evolucao_area,
             use_container_width=True
         )
 
         st.dataframe(
-            df_marca,
+
+            df_evolucao_area[
+                [
+                    "semana",
+                    "area_atual",
+                    "total",
+                    "disponiveis",
+                    "percentual_disponibilidade"
+                ]
+            ],
+
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.divider()
+
+        # ======================================
+        # EVOLUÇÃO POR MARCA
+        # ======================================
+
+        st.subheader(
+            "Evolução Semanal por Marca"
+        )
+
+        df_evolucao_marca = obter_evolucao_por_marca(
+            data_inicio,
+            data_fim
+        )
+
+        fig_evolucao_marca = grafico_evolucao_marca(
+            df_evolucao_marca
+        )
+
+        st.plotly_chart(
+            fig_evolucao_marca,
             use_container_width=True
+        )
+
+        st.dataframe(
+
+            df_evolucao_marca[
+                [
+                    "semana",
+                    "marca",
+                    "total",
+                    "disponiveis",
+                    "percentual_disponibilidade"
+                ]
+            ],
+
+            use_container_width=True,
+            hide_index=True
         )
