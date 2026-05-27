@@ -440,11 +440,26 @@ def carregar():
 
         st.subheader("Analytics RF")
 
+        col1, col2 = st.columns(2)
+
+        with col1:
+            data_inicio = st.date_input(
+                "Data inicial"
+            )
+
+        with col2:
+            data_fim = st.date_input(
+                "Data final"
+            )
+
         # ======================================
         # EVOLUÇÃO SEMANAL
         # ======================================
 
-        df_evolucao = obter_evolucao_semanal()
+        df_evolucao = obter_evolucao_semanal(
+            data_inicio,
+            data_fim
+        )
 
         fig = grafico_evolucao(df_evolucao)
 
@@ -459,7 +474,10 @@ def carregar():
         # ÁREA
         # ======================================
 
-        df_area = obter_disponibilidade_por_area()
+        df_area = obter_disponibilidade_por_area(
+            data_inicio,
+            data_fim
+        )
 
         df_area = calcular_percentuais(df_area)
 
@@ -481,7 +499,10 @@ def carregar():
         # MARCA
         # ======================================
 
-        df_marca = obter_disponibilidade_por_marca()
+        df_marca = obter_disponibilidade_por_marca(
+            data_inicio,
+            data_fim
+        )
 
         df_marca = calcular_percentuais(df_marca)
 
