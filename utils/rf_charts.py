@@ -33,28 +33,52 @@ def grafico_evolucao(df):
 
 def grafico_area(df):
 
+    df = df.copy()
+
+    df["percentual_disponibilidade"] = (
+        (df["disponiveis"] / df["total"]) * 100
+    ).round(2)
+
     fig = px.bar(
 
         df,
 
-        x="percentual_disponiveis",
+        x="area_atual",
 
-        y="area_atual",
+        y="percentual_disponibilidade",
 
-        orientation="h",
+        text="disponiveis_%",
 
-        title="Disponibilidade por Site",
+        hover_data={
+            "total": True,
+            "disponiveis": True,
+            "quebrados": True,
+            "ausentes": True,
+            "percentual_disponibilidade": ':.2f'
+        },
 
-        hover_data=[
-            "total",
-            "disponiveis",
-            "quebrados",
-            "ausentes"
-        ]
+        title="Disponibilidade de RFs por Área (%)"
+    )
+
+    fig.update_traces(
+
+        textposition="outside"
+    )
+
+    fig.update_layout(
+
+        yaxis_title="Disponibilidade (%)",
+
+        xaxis_title="Área",
+
+        yaxis=dict(range=[0, 100]),
+
+        uniformtext_minsize=8,
+
+        uniformtext_mode="hide"
     )
 
     return fig
-
 
 # ==========================================
 # DISPONIBILIDADE POR MARCA
@@ -62,24 +86,49 @@ def grafico_area(df):
 
 def grafico_marca(df):
 
+    df = df.copy()
+
+    df["percentual_disponibilidade"] = (
+        (df["disponiveis"] / df["total"]) * 100
+    ).round(2)
+
     fig = px.bar(
 
         df,
 
-        x="percentual_disponiveis",
+        x="marca",
 
-        y="marca",
+        y="percentual_disponibilidade",
 
-        orientation="h",
+        text="disponiveis_%",
 
-        title="Disponibilidade por Marca",
+        hover_data={
+            "total": True,
+            "disponiveis": True,
+            "quebrados": True,
+            "ausentes": True,
+            "percentual_disponibilidade": ':.2f'
+        },
 
-        hover_data=[
-            "total",
-            "disponiveis",
-            "quebrados",
-            "ausentes"
-        ]
+        title="Disponibilidade de RFs por Marca (%)"
+    )
+
+    fig.update_traces(
+
+        textposition="outside"
+    )
+
+    fig.update_layout(
+
+        yaxis_title="Disponibilidade (%)",
+
+        xaxis_title="Marca",
+
+        yaxis=dict(range=[0, 100]),
+
+        uniformtext_minsize=8,
+
+        uniformtext_mode="hide"
     )
 
     return fig
