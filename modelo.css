@@ -5,6 +5,14 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
+/* Remove padding lateral exagerado da sidebar */
+
+[data-testid="stSidebarContent"] {
+    padding-top: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
 /* --- ESTILOS GERAIS DA PÁGINA --- */
 [data-testid="stAppViewContainer"] > .main {
     background-color: #fcf9f8; 
@@ -44,63 +52,186 @@ iframe {
 .header-divider { height: 30px; width: 2px; background-color: #e5e2e1; margin-right: 20px; }
 .app-title { font-size: 20px; color: #1b1c1c; font-weight: 800; margin: 0; font-family: 'Manrope', sans-serif; }
 
-/* --- 3. BARRA LATERAL (SIDEBAR) --- */
-[data-testid="stSidebar"] { background-color: #f6f3f2 !important; }
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-    color: #a70009 !important; font-family: 'Manrope', sans-serif; font-weight: 800;
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+[data-testid="stSidebar"] {
+    background: #f8f8f8 !important;
+    border-right: 1px solid #e7e7e7;
 }
 
-/* --- 4. MENU LATERAL (ESCONDER BOLINHAS E ESTILIZAR) --- */
-/* Esconde a bolinha (radio) */
-[data-testid="stSidebar"] [role="radiogroup"] > label > div:first-child {
+/* Remove fundos e containers internos do Streamlit */
+
+section[data-testid="stSidebar"] > div,
+[data-testid="stSidebarContent"],
+[data-testid="stSidebar"] .block-container,
+[data-testid="stSidebar"] .element-container,
+[data-testid="stSidebar"] .stMarkdown {
+    background: transparent !important;
+}
+
+/* Padding interno */
+
+[data-testid="stSidebarContent"] {
+    padding-top: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Remove padding padrão */
+
+[data-testid="stSidebar"] .block-container {
+    padding-top: 0.5rem !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Remove estilos antigos radio */
+
+[data-testid="stSidebar"] [role="radiogroup"] {
     display: none !important;
 }
 
-/* Estilo do botão do menu */
-[data-testid="stSidebar"] [role="radiogroup"] > label {
-    padding: 10px 15px !important;
-    margin-bottom: 5px !important;
-    border-radius: 8px !important;
-    background-color: transparent !important;
-    border-left: 4px solid transparent !important;
-    transition: all 0.2s ease-in-out !important;
-    width: 100% !important;
+/* =========================================================
+   CABEÇALHOS SIDEBAR
+========================================================= */
+
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: #a70009 !important;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
 }
 
-/* Efeito Hover */
-[data-testid="stSidebar"] [role="radiogroup"] > label:hover { 
-    background-color: #e5e2e1 !important; 
+/* =========================================================
+   TÍTULO "NAVEGAÇÃO"
+========================================================= */
+
+.sidebar-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7a7a7a;
+
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+
+    margin-top: 12px;
+    margin-bottom: 18px;
+
+    padding-left: 4px;
 }
 
-/* Item SELECIONADO */
-[data-testid="stSidebar"] [role="radiogroup"] > label[data-checked="true"],
-[data-testid="stSidebar"] [role="radiogroup"] > label:has(input:checked) {
-    background-color: rgba(254, 203, 0, 0.15) !important; 
-    border-left: 4px solid #d40511 !important; 
+/* =========================================================
+   OPTION MENU
+========================================================= */
+
+/* Lista */
+
+[data-testid="stSidebar"] ul {
+    padding-left: 0 !important;
+    margin: 0 !important;
 }
 
-/* Texto do menu */
-[data-testid="stSidebar"] [role="radiogroup"] p {
-    font-family: 'Inter', sans-serif !important; 
-    font-size: 14px !important; 
+/* Remove wrappers do option_menu */
+
+.st-emotion-cache-1v0mbdj,
+.st-emotion-cache-16txtl3,
+.st-emotion-cache-ue6h4q {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Links */
+
+.nav-link {
+    min-height: 48px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    border-radius: 12px !important;
+
+    margin-bottom: 8px !important;
+
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+
+    border: 1px solid transparent !important;
+
+    transition: all 0.2s ease !important;
+
+    background: transparent !important;
+
+    color: #2b2b2b !important;
+
+    font-size: 15px !important;
     font-weight: 600 !important;
-    color: #5e3f3b !important; 
-    margin: 0 !important; 
-    text-transform: none !important;
+
+    font-family: 'Inter', sans-serif !important;
 }
 
-/* Texto SELECIONADO */
-[data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"] p,
-[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p {
-    color: #d40511 !important; 
-    font-weight: 800 !important;
+/* Hover */
+
+.nav-link:hover {
+    background-color: #ececec !important;
+
+    border-color: #e2e2e2 !important;
+
+    color: #d40511 !important;
+
+    transform: translateX(2px);
 }
 
-/* --- 5. BOTÃO DE SAIR --- */
+/* Ativo */
+
+.nav-link.active {
+    background: linear-gradient(
+        135deg,
+        #d40511 0%,
+        #b3000f 100%
+    ) !important;
+
+    color: white !important;
+
+    font-weight: 700 !important;
+
+    border: none !important;
+
+    box-shadow: 0 4px 12px rgba(212, 5, 17, 0.18);
+}
+
+/* Ícones */
+
+.nav-link i {
+    font-size: 18px !important;
+}
+
+/* Ícone ativo */
+
+.nav-link.active i {
+    color: white !important;
+}
+/* =========================================================
+   BOTÃO SAIR
+========================================================= */
+
+[data-testid="stSidebar"] .stButton {
+    margin-top: 10px;
+}
+
 [data-testid="stSidebar"] .stButton > button {
-    background-color: transparent !important; border: 2px solid #e8bdb7 !important;
-    color: #a70009 !important; border-radius: 8px; font-weight: 700; width: 100%;
+    height: 42px !important;
+
+    border-radius: 10px !important;
+
+    transition: all 0.2s ease !important;
 }
+
 [data-testid="stSidebar"] .stButton > button:hover {
-    background-color: #ffdad6 !important; border-color: #a70009 !important;
+    transform: translateY(-1px);
 }
