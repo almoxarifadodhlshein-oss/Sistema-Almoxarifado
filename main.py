@@ -6,6 +6,8 @@ from PIL import Image
 import base64
 from pathlib import Path
 from utils.rf_db import init_rf_db
+import importlib
+from streamlit_option_menu import option_menu
 
 # --- CONFIGURAÇÕES DA PÁGINA ---
 
@@ -67,6 +69,8 @@ if "username" not in st.session_state:
 if "user_role" not in st.session_state:
     st.session_state.user_role = ""
 
+if "pagina" not in st.session_state:
+    st.session_state.pagina = "home"
 
 def show_login_page():
     # Injeta CSS específico apenas para a tela de login
@@ -224,42 +228,115 @@ else:
         st.session_state.user_role = ""
         st.rerun()
 
-    # Mapeamento de nomes de menu para nomes de módulo
-    PAGES = {
-        "🏠 Home": "home",
-        "✅ Aprovações Pendentes": "aprovacoes",
-        "📧 Cadastro de Emails": "cadastro_coordenadores",
-        "📝 Cadastro de Itens": "cadastro_itens",
-        "➕ Entrada de Estoque": "entrada_estoque",
-        "📤 Saída de EPIs": "saida_epi",
-        "📦 Saída de Insumos": "saida_insumos",
-        "🤝 Empréstimos": "emprestimo",
-        "🔄 Devoluções": "devolucao",
-        "🔍 Visualizar Estoque": "visualizar_estoque",
-        "📈 Relatórios": "relatorios",
-        "📑 Auditoria de Colaboradores": "consulta_colaborador",
-        "📑 Controle de Equipamentos": "rf_controle",
-
+    MODULOS = {
+        "Home": "home",
+        "Estoque": "modulos.estoque",
+        "Movimentações": "modulos.movimentacoes",
+        "Gestão": "modulos.gestao",
+        "Administração": "modulos.administracao",
     }
 
-    if st.session_state.user_role in ["visitante"]:
-        allowed = {"📤 Saída de EPIs", "📦 Saída de Insumos", "🤝 Empréstimos"}
-        PAGES = {k: v for k, v in PAGES.items() if k in allowed}
+    # ==========================================
+    # CONTROLE POR PERFIL
+    # ==========================================
 
-    selection = st.sidebar.radio("Navegar", list(PAGES.keys()), label_visibility="collapsed")
+    if st.session_state.user_role == "visitante":
+        MODULOS = {
+            " Movimentações": "modulos.movimentacoes",
+        }
 
-    # --- LÓGICA DE CARREGAMENTO DE PÁGINA (A CORREÇÃO PRINCIPAL) ---
-    # Importamos o módulo APENAS quando ele é selecionado.
-    # Isso evita a importação de todos os arquivos de uma vez e quebra o ciclo.
-    try:
-        page_module_name = PAGES[selection]
-        # Constrói o caminho completo para a importação: menus.nome_do_arquivo
-        module_path = f"menus.{page_module_name}"
-        # Importa o módulo dinamicamente
-        page_module = __import__(module_path, fromlist=[page_module_name])
-        # Chama a função 'carregar()' dentro do módulo importado
-        page_module.carregar()
-    except ImportError as e:
-        st.error(f"Erro ao carregar a página '{selection}': {e}. Verifique o nome do arquivo e as importações.")
-    except Exception as e:
-        st.error(f"Ocorreu um erro inesperado: {e}")
+    # ==========================================
+    # SIDEBAR
+    # ==========================================
+
+    ICONES = {
+        "Home": "house",
+        "Estoque": "box-seam",
+        "Movimentações": "arrow-left-right",
+        "Gestão": "graph-up",
+        "Administração": "gear",
+    }
+
+    with st.sidebar:
+
+        st.markdown(
+            '<div class="sidebar-title">Navegação</div>',
+            unsafe_allow_html=True
+        )
+
+        opcoes = list(MODULOS.keys())
+
+        selection = option_menu(
+            menu_title=None,
+
+            options=opcoes,
+
+            icons=[ICONES[opcao] for opcao in opcoes],
+
+            menu_icon="grid",
+
+            default_index=0,
+
+            styles={
+                "container": {
+                    "padding": "0!important",
+                    "background-color": "transparent",
+                },
+
+                "icon": {
+                    "font-size": "18px",
+                },
+
+                "nav-link": {
+                    "text-align": "left",
+                    "margin": "0px",
+                },
+            },
+        )
+
+    # ==========================================
+    # HOME
+    # ==========================================
+
+    if selection == "Home":
+
+        try:
+            module_path = "menus.home"
+            page_module = importlib.import_module(module_path)
+            page_module.carregar()
+
+        except Exception as e:
+            st.error(f"Erro ao carregar Home: {e}")
+
+    # ==========================================
+    # MÓDULOS
+    # ==========================================
+
+    else:
+
+        try:
+
+            # Carrega módulo visual
+            modulo_path = f"menus.{MODULOS[selection]}"
+            modulo = importlib.import_module(modulo_path)
+
+            # Renderiza botões/cards
+            modulo.carregar()
+
+            # ==========================================
+            # ABRIR PÁGINA INTERNA
+            # ==========================================
+
+            if st.session_state.pagina != "home":
+                pagina_path = f"menus.{st.session_state.pagina}"
+                pagina = importlib.import_module(pagina_path)
+
+                st.divider()
+
+                pagina.carregar()
+
+        except ImportError as e:
+            st.error(f"Erro ao carregar módulo: {e}")
+
+        except Exception as e:
+            st.error(f"Ocorreu um erro inesperado: {e}")
