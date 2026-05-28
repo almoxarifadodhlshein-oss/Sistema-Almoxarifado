@@ -7,7 +7,8 @@ import base64
 from pathlib import Path
 from utils.rf_db import init_rf_db
 import importlib
-from streamlit_option_menu import option_menu
+
+from components.sidebar import render_sidebar
 
 # --- CONFIGURAÇÕES DA PÁGINA ---
 
@@ -257,86 +258,35 @@ else:
         "Administração": "gear",
     }
 
-    with st.sidebar:
+    render_sidebar()
 
-        st.markdown(
-            '<div class="sidebar-title">Navegação</div>',
-            unsafe_allow_html=True
-        )
+    PAGES = {
+        "home": "home",
+        "entrada_estoque": "entrada_estoque",
+        "visualizar_estoque": "visualizar_estoque",
+        "cadastro_itens": "cadastro_itens",
+        "saida_epi": "saida_epi",
+        "saida_insumos": "saida_insumos",
+        "emprestimo": "emprestimo",
+        "devolucao": "devolucao",
+        "relatorios": "relatorios",
+        "aprovacoes": "aprovacoes",
+        "rf_controle": "rf_controle",
+        "cadastro_coordenadores": "cadastro_coordenadores",
+        "consulta_colaborador": "consulta_colaborador",
+    }
 
-        opcoes = list(MODULOS.keys())
+    if "page" not in st.session_state:
+        st.session_state.page = "home"
 
-        selection = option_menu(
-            menu_title=None,
+    try:
 
-            options=opcoes,
+        module_path = f"menus.{PAGES[st.session_state.page]}"
 
-            icons=[ICONES[opcao] for opcao in opcoes],
+        page_module = importlib.import_module(module_path)
 
-            menu_icon="grid",
+        page_module.carregar()
 
-            default_index=0,
+    except Exception as e:
 
-            styles={
-                "container": {
-                    "padding": "0!important",
-                    "background-color": "transparent",
-                },
-
-                "icon": {
-                    "font-size": "18px",
-                },
-
-                "nav-link": {
-                    "text-align": "left",
-                    "margin": "0px",
-                },
-            },
-        )
-
-    # ==========================================
-    # HOME
-    # ==========================================
-
-    if selection == "Home":
-
-        try:
-            module_path = "menus.home"
-            page_module = importlib.import_module(module_path)
-            page_module.carregar()
-
-        except Exception as e:
-            st.error(f"Erro ao carregar Home: {e}")
-
-    # ==========================================
-    # MÓDULOS
-    # ==========================================
-
-    else:
-
-        try:
-
-            # Carrega módulo visual
-            modulo_path = f"menus.{MODULOS[selection]}"
-            modulo = importlib.import_module(modulo_path)
-
-            # Renderiza botões/cards
-            modulo.carregar()
-
-            # ==========================================
-            # ABRIR PÁGINA INTERNA
-            # ==========================================
-
-            if st.session_state.pagina != "home":
-                pagina_path = f"menus.{st.session_state.pagina}"
-                pagina = importlib.import_module(pagina_path)
-
-                st.divider()
-
-                pagina.carregar()
-
-        except ImportError as e:
-            st.error(f"Erro ao carregar módulo: {e}")
-
-        except Exception as e:
-            st.error(f"Ocorreu um erro inesperado: {e}")
+        st.error(f"Erro ao carregar página: {e}")

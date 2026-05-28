@@ -1,0 +1,107 @@
+/* ==================================================
+   SIDEBAR
+================================================== */
+
+[data-testid="stSidebar"] {
+
+    background: #f7f7f7;
+
+    border-right: 1px solid #e5e5e5;
+}
+
+/* Remove menu padrão */
+
+[data-testid="stSidebarNav"] {
+    display: none;
+}
+
+/* Remove padding */
+
+[data-testid="stSidebarContent"] {
+
+    padding-top: 1rem;
+
+    padding-left: 1rem;
+
+    padding-right: 1rem;
+}
+
+/* ==================================================
+   LOGO
+================================================== */
+
+.sidebar-logo {
+
+    font-size: 24px;
+
+    font-weight: 800;
+
+    color: #d40511;
+
+    margin-bottom: 25px;
+
+    font-family: 'Manrope', sans-serif;
+}
+
+/* ==================================================
+   SECTION TITLE
+================================================== */
+
+.sidebar-section {
+
+    font-size: 12px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    color: #888;
+
+    font-weight: 700;
+
+    margin-bottom: 15px;
+}
+
+/* ==================================================
+   BOTÕES
+================================================== */
+
+.stButton button {
+
+    border-radius: 12px !important;
+
+    height: 45px !important;
+
+    border: none !important;
+
+    background: transparent !important;
+
+    text-align: left !important;
+
+    font-weight: 600 !important;
+
+    transition: 0.2s !important;
+}
+
+.stButton button:hover {
+
+    background: #ececec !important;
+
+    color: #d40511 !important;
+}
+
+/* ==================================================
+   EXPANDERS
+================================================== */
+
+.streamlit-expanderHeader {
+
+    font-weight: 700 !important;
+
+    border-radius: 12px !important;
+}
+
+.streamlit-expanderHeader:hover {
+
+    background: #ececec !important;
+}
