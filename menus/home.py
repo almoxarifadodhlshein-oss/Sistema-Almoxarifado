@@ -4,10 +4,11 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import text
 import streamlit.components.v1 as components
-from string import Template # <-- Importação necessária
+from string import Template  # <-- Importação necessária
 
 from utils.db_connection import connect_db
 from utils.estoque_db import get_estoque_atual
+
 
 @st.cache_data(ttl=60)
 def _read_table_postgres(table_name):
@@ -20,12 +21,13 @@ def _read_table_postgres(table_name):
     except Exception as e:
         return pd.DataFrame()
 
+
 def carregar():
     # --- 1. BUSCA E PREPARAÇÃO DOS DADOS ---
     valor_total_estoque = 0
     itens_baixo_estoque = 0
     df_estoque = get_estoque_atual()
-    
+
     if not df_estoque.empty:
         df_estoque['valor_total'] = df_estoque['quantidade'] * df_estoque['valor_unitario']
         valor_total_estoque = df_estoque['valor_total'].sum()
@@ -36,15 +38,15 @@ def carregar():
     total_saidas_epis = 0
     linhas_tabela_html = ""
     df_saidas_epis = _read_table_postgres("saida_epis")
-    
+
     if not df_saidas_epis.empty and 'quantidade' in df_saidas_epis.columns:
         total_saidas_epis = int(df_saidas_epis['quantidade'].sum())
-        
+
         df_frequencia = df_saidas_epis.groupby('item').agg(
             total_retirado=('quantidade', 'sum'),
             numero_retiradas=('item', 'count')
         ).sort_values(by='total_retirado', ascending=False).reset_index()
-        
+
         for index, row in df_frequencia.head(4).iterrows():
             linhas_tabela_html += f"""
             <tr class="hover:bg-stone-50 transition-colors border-b border-stone-50">
@@ -68,16 +70,16 @@ def carregar():
 
     cards_emprestimos_html = ""
     df_emprestimos = _read_table_postgres("emprestimos")
-    
+
     if not df_emprestimos.empty and 'status_emprestimo' in df_emprestimos.columns:
         df_pendentes = df_emprestimos[df_emprestimos['status_emprestimo'] == 'PENDENTE'].copy()
         if not df_pendentes.empty:
             df_pendentes['data'] = pd.to_datetime(df_pendentes['data'], errors='coerce')
             df_pendentes.sort_values(by='data', ascending=False, inplace=True)
-            
+
             for index, row in df_pendentes.head(4).iterrows():
                 data_formatada = row['data'].strftime('%d/%m') if pd.notnull(row['data']) else 'N/A'
-                
+
                 cards_emprestimos_html += f"""
                 <div class="flex items-start gap-4 p-4 rounded-lg hover:bg-stone-50 transition-all border border-stone-100 group">
                     <div class="flex-1">
@@ -96,17 +98,16 @@ def carregar():
         else:
             cards_emprestimos_html = "<div class='text-xs text-stone-500 text-center p-4'>Nenhum empréstimo pendente.</div>"
     else:
-         cards_emprestimos_html = "<div class='text-xs text-stone-500 text-center p-4'>Nenhum registro de empréstimo.</div>"
-
+        cards_emprestimos_html = "<div class='text-xs text-stone-500 text-center p-4'>Nenhum registro de empréstimo.</div>"
 
     # --- 2. LEITURA E INJEÇÃO DE DADOS NO HTML ---
     nome_usuario = st.session_state.get("username", "Usuário").capitalize()
-    
+
     try:
         # Lê o arquivo HTML externo
         with open("templates/home.html", "r", encoding="utf-8") as file:
             template_html = file.read()
-            
+
         # Injeta as variáveis Python no lugar dos identificadores com $
         html_final = Template(template_html).safe_substitute(
             nome_usuario=nome_usuario,
@@ -143,6 +144,6 @@ def carregar():
 
         # Renderiza na tela (Apague o st.markdown com CSS que estava antes disso)
         components.html(html_final, height=850, scrolling=True)
-        
+
     except FileNotFoundError:
         st.error("Arquivo templates/home.html não encontrado.")

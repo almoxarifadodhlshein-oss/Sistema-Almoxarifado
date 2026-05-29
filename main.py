@@ -8,7 +8,21 @@ from pathlib import Path
 from utils.rf_db import init_rf_db
 import importlib
 
-from components.sidebar import render_sidebar
+from components.navbar import render_navbar
+
+query_params = st.query_params
+
+if "page" in st.query_params:
+
+    page = st.query_params["page"]
+
+    if isinstance(page, list):
+        page = page[0]
+
+    st.session_state.page = page
+
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
 # --- CONFIGURAÇÕES DA PÁGINA ---
 
@@ -142,15 +156,15 @@ def show_login_page():
     """, unsafe_allow_html=True)
 
     # Reduzi o número de quebras de linha para o card não ficar tão esmagado para baixo
-    st.write("") 
     st.write("")
-    
+    st.write("")
+
     col1, col2, col3 = st.columns([1, 1.2, 1])
-    
+
     with col2:
         # Usamos o container com borda do Streamlit que estilizamos no CSS acima
         with st.container(border=True):
-            
+
             # Cabeçalho do Card
             st.markdown("""
             <div style="text-align: center; margin-bottom: 30px;">
@@ -162,7 +176,7 @@ def show_login_page():
             # Labels arrumadas (margens positivas e espaçamento correto)
             st.markdown('<p style="font-size: 12px; font-weight: 600; color: #5e3f3b; margin-bottom: 5px;">USUÁRIO</p>', unsafe_allow_html=True)
             username = st.text_input("Usuário", key="login_username", placeholder="Insira seu login", label_visibility="collapsed")
-            
+
             st.markdown('<p style="font-size: 12px; font-weight: 600; color: #5e3f3b; margin-bottom: 5px; margin-top: 15px;">SENHA</p>', unsafe_allow_html=True)
             password = st.text_input("Senha", type="password", key="login_password", placeholder="••••••••", label_visibility="collapsed")
 
@@ -172,7 +186,7 @@ def show_login_page():
                 password_hash = ""
 
             st.write("") # Espaçamento
-            
+
             # Botão Nativo de tela cheia
             if st.button("Entrar", use_container_width=True):
                 if username in USERS and password_hash == USERS[username]["password_hash"]:
@@ -203,31 +217,9 @@ def show_login_page():
 if not st.session_state.logged_in:
     show_login_page()
 else:
-    # --- CABEÇALHO ---
-    logo_base64 = img_to_bytes("dhl_logo.png")
-    if logo_base64:
-        logo_html = f"<img src='data:image/png;base64,{logo_base64}' class='logo-img'>"
-        st.markdown(
-            f"""
-            <div class="app-header">
-                {logo_html}
-                <div class="header-divider"></div>
-                <h1 class="app-title">Controle de Almoxarifado</h1>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
 
-    # --- MENU LATERAL (SIDEBAR) ---
-    user_label = USERS.get(st.session_state.username, {}).get("label", "Usuário")
-    st.sidebar.header(f"Bem-vindo(a), {user_label}!")
-    st.sidebar.subheader(f"Perfil: {st.session_state.user_role.capitalize()}")
 
-    if st.sidebar.button("Sair"):
-        st.session_state.logged_in = False
-        st.session_state.username = ""
-        st.session_state.user_role = ""
-        st.rerun()
+
 
     MODULOS = {
         "Home": "home",
@@ -246,19 +238,12 @@ else:
             " Movimentações": "modulos.movimentacoes",
         }
 
-    # ==========================================
-    # SIDEBAR
-    # ==========================================
+    render_navbar()
 
-    ICONES = {
-        "Home": "house",
-        "Estoque": "box-seam",
-        "Movimentações": "arrow-left-right",
-        "Gestão": "graph-up",
-        "Administração": "gear",
-    }
+    query_params = st.query_params
 
-    render_sidebar()
+    if "page" in query_params:
+        st.session_state.page = query_params["page"]
 
     PAGES = {
         "home": "home",
