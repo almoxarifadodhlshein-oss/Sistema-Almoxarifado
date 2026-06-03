@@ -42,7 +42,8 @@ from utils.rf_charts import (
 
 def carregar():
 
-
+    # INIT DB
+    init_rf_db()
 
     st.title("📡 Controle de RFs")
 

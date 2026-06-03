@@ -16,8 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# INIT DB
-init_rf_db()
+
 
 # --- FUNÇÕES DE AJUDA ---
 @st.cache_data
