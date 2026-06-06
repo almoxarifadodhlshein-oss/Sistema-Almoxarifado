@@ -259,19 +259,19 @@ else:
         # --- MENU ORGANIZADO PARA ALMOXARIFE / ADMIN ---
         
         
-        with st.sidebar.expander("📁 CADASTRO", expanded=False):
+        with st.sidebar.expander("📁 Cadastro", expanded=False):
             st.button("📝 Cadastro de Itens", use_container_width=True, on_click=mudar_pagina, args=("📝 Cadastro de Itens",))
             st.button("📧 Cadastro de Emails", use_container_width=True, on_click=mudar_pagina, args=("📧 Cadastro de Emails",))
             st.button("➕ Entrada de Estoque", use_container_width=True, on_click=mudar_pagina, args=("➕ Entrada de Estoque",))
 
-        with st.sidebar.expander("🛠️ GESTÃO DO ALMOXARIFADO", expanded=False):
+        with st.sidebar.expander("🛠️ Gestão do almoxarifado", expanded=False):
             st.button("✅ Aprovações Pendentes", use_container_width=True, on_click=mudar_pagina, args=("✅ Aprovações Pendentes",))
             st.button("📤 Saída de EPIs", use_container_width=True, on_click=mudar_pagina, args=("📤 Saída de EPIs",))
             st.button("📦 Saída de Insumos", use_container_width=True, on_click=mudar_pagina, args=("📦 Saída de Insumos",))
             st.button("🤝 Empréstimos", use_container_width=True, on_click=mudar_pagina, args=("🤝 Empréstimos",))
             st.button("🔄 Devoluções", use_container_width=True, on_click=mudar_pagina, args=("🔄 Devoluções",))
 
-        with st.sidebar.expander("📊 RELATÓRIOS", expanded=False):
+        with st.sidebar.expander("📊 Relatórios", expanded=False):
             st.button("🔍 Visualizar Estoque", use_container_width=True, on_click=mudar_pagina, args=("🔍 Visualizar Estoque",))
             st.button("📑 Auditoria de Colaboradores", use_container_width=True, on_click=mudar_pagina, args=("📑 Auditoria de Colaboradores",))
             st.button("📈 Relatórios", use_container_width=True, on_click=mudar_pagina, args=("📈 Relatórios",))
