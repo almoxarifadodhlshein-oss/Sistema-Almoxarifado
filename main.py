@@ -209,7 +209,7 @@ else:
 
     # --- MENU LATERAL (SIDEBAR) ---
     user_label = USERS.get(st.session_state.username, {}).get("label", "Usuário")
-    st.sidebar.header(f"Bem-vindo(a), {user_label}!")
+    st.sidebar.header(f"Bem-vindo(a)!")
     st.sidebar.subheader(f"Perfil: {st.session_state.user_role.capitalize()}")
 
     if st.sidebar.button("Sair"):
