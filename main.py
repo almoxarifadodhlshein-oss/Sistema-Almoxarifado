@@ -33,6 +33,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
 # Carrega o CSS a partir do arquivo externo
 carregar_css("modelo.css")
 
@@ -212,8 +213,6 @@ else:
     st.sidebar.header(f"Bem-vindo(a)!")
     st.sidebar.subheader(f"Perfil: {st.session_state.user_role.capitalize()}")
 
-    
-
     st.sidebar.markdown("---")
 
     # Mapeamento de nomes de menu para nomes de módulo
@@ -238,7 +237,7 @@ else:
 
     def mudar_pagina(nome_pagina):
         st.session_state.pagina_atual = nome_pagina
-    
+
     # Botão Home (Apenas para admin)
     if st.session_state.user_role != "visitante":
         st.sidebar.button("🏠 Home", use_container_width=True, on_click=mudar_pagina, args=("🏠 Home",))
@@ -270,15 +269,16 @@ else:
             st.button("🔍 Visualizar Estoque", use_container_width=True, on_click=mudar_pagina, args=("🔍 Visualizar Estoque",))
             st.button("📑 Auditoria de Colaboradores", use_container_width=True, on_click=mudar_pagina, args=("📑 Auditoria de Colaboradores",))
             st.button("📈 Relatórios", use_container_width=True, on_click=mudar_pagina, args=("📈 Relatórios",))
-        
-        # -- BOTÃO DE SAIR --
-        st.sidebar.markdown("---")
-        if st.sidebar.button("Sair"):
-            st.session_state.logged_in = False
-            st.session_state.username = ""
-            st.session_state.user_role = ""
-            st.session_state.pagina_atual = "🏠 Home" # Reseta a página ao sair
-            st.rerun()
+
+
+    # --- BOTÃO DE SAIR ---
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Sair"):
+        st.session_state.logged_in = False
+        st.session_state.username = ""
+        st.session_state.user_role = ""
+        st.session_state.pagina_atual = "🏠 Home" # Reseta a página ao sair
+        st.rerun()
 
     # --- LÓGICA DE CARREGAMENTO DE PÁGINA ---
     # Define a seleção com base no botão clicado

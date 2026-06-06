@@ -1,8 +1,8 @@
 /* --- 1. IMPORTAÇÃO DAS FONTES --- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Work+Sans:400,500,600,700&display=swap');
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Work Sans';
 }
 
 /* --- ESTILOS GERAIS DA PÁGINA --- */
@@ -38,16 +38,17 @@ iframe {
     border-left: 6px solid #d40511; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     margin-bottom: 25px;
+    font-family: 'Work Sans';
 }
 
 .logo-img { height: 60px; margin-right: 20px; }
 .header-divider { height: 30px; width: 2px; background-color: #e5e2e1; margin-right: 20px; }
-.app-title { font-size: 20px; color: #1b1c1c; font-weight: 800; margin: 0; font-family: 'Manrope', sans-serif; }
+.app-title { font-size: 20px; color: #1b1c1c; font-weight: 800; margin: 0; font-family: 'Work Sans', sans-serif !important; }
 
 /* --- 3. BARRA LATERAL (SIDEBAR) --- */
 [data-testid="stSidebar"] { background-color: #f6f3f2 !important; }
 [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-    color: #a70009 !important; font-family: 'Manrope', sans-serif; font-weight: 800;
+    color: #a70009 !important; font-family: 'Work Sans', sans-serif; font-weight: 800;
 }
 
 /* --- 4. MENU LATERAL (ESCONDER BOLINHAS E ESTILIZAR) --- */
@@ -81,7 +82,7 @@ iframe {
 
 /* Texto do menu */
 [data-testid="stSidebar"] [role="radiogroup"] p {
-    font-family: 'Inter', sans-serif !important; 
+    font-family: 'Work Sans', sans-serif !important; 
     font-size: 14px !important; 
     font-weight: 600 !important;
     color: #5e3f3b !important; 
