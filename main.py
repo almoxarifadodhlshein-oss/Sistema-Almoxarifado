@@ -238,13 +238,6 @@ else:
 
     def mudar_pagina(nome_pagina):
         st.session_state.pagina_atual = nome_pagina
-        
-    if st.sidebar.button("Sair"):
-        st.session_state.logged_in = False
-        st.session_state.username = ""
-        st.session_state.user_role = ""
-        st.session_state.pagina_atual = "🏠 Home" # Reseta a página ao sair
-        st.rerun()
     
     # Botão Home (Apenas para admin)
     if st.session_state.user_role != "visitante":
@@ -278,6 +271,12 @@ else:
             st.button("📑 Auditoria de Colaboradores", use_container_width=True, on_click=mudar_pagina, args=("📑 Auditoria de Colaboradores",))
             st.button("📈 Relatórios", use_container_width=True, on_click=mudar_pagina, args=("📈 Relatórios",))
 
+        if st.sidebar.button("Sair"):
+            st.session_state.logged_in = False
+            st.session_state.username = ""
+            st.session_state.user_role = ""
+            st.session_state.pagina_atual = "🏠 Home" # Reseta a página ao sair
+            st.rerun()
 
     # --- LÓGICA DE CARREGAMENTO DE PÁGINA ---
     # Define a seleção com base no botão clicado
