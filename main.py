@@ -212,12 +212,7 @@ else:
     st.sidebar.header(f"Bem-vindo(a)!")
     st.sidebar.subheader(f"Perfil: {st.session_state.user_role.capitalize()}")
 
-    if st.sidebar.button("Sair"):
-        st.session_state.logged_in = False
-        st.session_state.username = ""
-        st.session_state.user_role = ""
-        st.session_state.pagina_atual = "🏠 Home" # Reseta a página ao sair
-        st.rerun()
+    
 
     st.sidebar.markdown("---")
 
@@ -243,7 +238,14 @@ else:
 
     def mudar_pagina(nome_pagina):
         st.session_state.pagina_atual = nome_pagina
-
+        
+if st.sidebar.button("Sair"):
+        st.session_state.logged_in = False
+        st.session_state.username = ""
+        st.session_state.user_role = ""
+        st.session_state.pagina_atual = "🏠 Home" # Reseta a página ao sair
+        st.rerun()
+    
     # Botão Home (Apenas para admin)
     if st.session_state.user_role != "visitante":
         st.sidebar.button("🏠 Home", use_container_width=True, on_click=mudar_pagina, args=("🏠 Home",))
