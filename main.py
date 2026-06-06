@@ -1,22 +1,10 @@
-
+# Em main.py (VERSÃO FINAL CORRIGIDA)
 
 import streamlit as st
 import hashlib
 from PIL import Image
 import base64
 from pathlib import Path
-from utils.rf_db import init_rf_db
-
-# --- CONFIGURAÇÕES DA PÁGINA ---
-
-st.set_page_config(
-    page_title="Controle de Almoxarifado DHL",
-    page_icon="https://www.dhl.com/etc/clientlibs/dhl/clientlib-all/assets/favicon.ico",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-
 
 # --- FUNÇÕES DE AJUDA ---
 @st.cache_data
@@ -36,7 +24,14 @@ def carregar_css(nome_arquivo):
     except FileNotFoundError:
         st.error(f"Arquivo CSS '{nome_arquivo}' não encontrado.")
 
-
+# --- CONFIGURAÇÕES DA PÁGINA ---
+# Esta deve ser a PRIMEIRA chamada Streamlit no seu script
+st.set_page_config(
+    page_title="Controle de Almoxarifado DHL",
+    page_icon="https://www.dhl.com/etc/clientlibs/dhl/clientlib-all/assets/favicon.ico",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Carrega o CSS a partir do arquivo externo
 carregar_css("modelo.css")
@@ -221,7 +216,10 @@ else:
         st.session_state.logged_in = False
         st.session_state.username = ""
         st.session_state.user_role = ""
+        st.session_state.pagina_atual = "🏠 Home" # Reseta a página ao sair
         st.rerun()
+
+    st.sidebar.markdown("---")
 
     # Mapeamento de nomes de menu para nomes de módulo
     PAGES = {
@@ -237,26 +235,65 @@ else:
         "🔍 Visualizar Estoque": "visualizar_estoque",
         "📈 Relatórios": "relatorios",
         "📑 Auditoria de Colaboradores": "consulta_colaborador",
-        "📑 Controle de Equipamentos": "rf_controle",
-
     }
 
-    if st.session_state.user_role in ["visitante"]:
-        allowed = {"📤 Saída de EPIs", "📦 Saída de Insumos", "🤝 Empréstimos"}
-        PAGES = {k: v for k, v in PAGES.items() if k in allowed}
+    # Controle de navegação via botões
+    if "pagina_atual" not in st.session_state:
+        st.session_state.pagina_atual = "🏠 Home"
 
-    selection = st.sidebar.radio("Navegar", list(PAGES.keys()), label_visibility="collapsed")
+    def mudar_pagina(nome_pagina):
+        st.session_state.pagina_atual = nome_pagina
 
-    # --- LÓGICA DE CARREGAMENTO DE PÁGINA (A CORREÇÃO PRINCIPAL) ---
-    # Importamos o módulo APENAS quando ele é selecionado.
-    # Isso evita a importação de todos os arquivos de uma vez e quebra o ciclo.
+    # Botão Home (Apenas para admin)
+    if st.session_state.user_role != "visitante":
+        st.sidebar.button("🏠 Home", use_container_width=True, on_click=mudar_pagina, args=("🏠 Home",))
+
+    # --- LÓGICA DE EXIBIÇÃO POR PERFIL ---
+    if st.session_state.user_role == "visitante":
+        st.sidebar.caption("📌 OPERAÇÕES DISPONÍVEIS")
+        st.sidebar.button("📤 Saída de EPIs", use_container_width=True, on_click=mudar_pagina, args=("📤 Saída de EPIs",))
+        st.sidebar.button("📦 Saída de Insumos", use_container_width=True, on_click=mudar_pagina, args=("📦 Saída de Insumos",))
+        st.sidebar.button("🤝 Empréstimos", use_container_width=True, on_click=mudar_pagina, args=("🤝 Empréstimos",))
+        
+    else:
+        # --- MENU ORGANIZADO PARA ALMOXARIFE / ADMIN ---
+        
+        
+        with st.sidebar.expander("📁 CADASTRO", expanded=False):
+            st.button("📝 Cadastro de Itens", use_container_width=True, on_click=mudar_pagina, args=("📝 Cadastro de Itens",))
+            st.button("📧 Cadastro de Emails", use_container_width=True, on_click=mudar_pagina, args=("📧 Cadastro de Emails",))
+            st.button("➕ Entrada de Estoque", use_container_width=True, on_click=mudar_pagina, args=("➕ Entrada de Estoque",))
+
+        with st.sidebar.expander("🛠️ GESTÃO DO ALMOXARIFADO", expanded=False):
+            st.button("✅ Aprovações Pendentes", use_container_width=True, on_click=mudar_pagina, args=("✅ Aprovações Pendentes",))
+            st.button("📤 Saída de EPIs", use_container_width=True, on_click=mudar_pagina, args=("📤 Saída de EPIs",))
+            st.button("📦 Saída de Insumos", use_container_width=True, on_click=mudar_pagina, args=("📦 Saída de Insumos",))
+            st.button("🤝 Empréstimos", use_container_width=True, on_click=mudar_pagina, args=("🤝 Empréstimos",))
+            st.button("🔄 Devoluções", use_container_width=True, on_click=mudar_pagina, args=("🔄 Devoluções",))
+
+        with st.sidebar.expander("📊 RELATÓRIOS", expanded=False):
+            st.button("🔍 Visualizar Estoque", use_container_width=True, on_click=mudar_pagina, args=("🔍 Visualizar Estoque",))
+            st.button("📑 Auditoria de Colaboradores", use_container_width=True, on_click=mudar_pagina, args=("📑 Auditoria de Colaboradores",))
+            st.button("📈 Relatórios", use_container_width=True, on_click=mudar_pagina, args=("📈 Relatórios",))
+
+
+    # --- LÓGICA DE CARREGAMENTO DE PÁGINA ---
+    # Define a seleção com base no botão clicado
+    selection = st.session_state.pagina_atual
+
+    # Fallback de segurança redireciona consoante o perfil
+    if selection not in PAGES:
+        if st.session_state.user_role == "visitante":
+            selection = "📤 Saída de EPIs"
+            st.session_state.pagina_atual = "📤 Saída de EPIs"
+        else:
+            selection = "🏠 Home"
+            st.session_state.pagina_atual = "🏠 Home"
+
     try:
         page_module_name = PAGES[selection]
-        # Constrói o caminho completo para a importação: menus.nome_do_arquivo
         module_path = f"menus.{page_module_name}"
-        # Importa o módulo dinamicamente
         page_module = __import__(module_path, fromlist=[page_module_name])
-        # Chama a função 'carregar()' dentro do módulo importado
         page_module.carregar()
     except ImportError as e:
         st.error(f"Erro ao carregar a página '{selection}': {e}. Verifique o nome do arquivo e as importações.")
