@@ -270,7 +270,9 @@ else:
             st.button("🔍 Visualizar Estoque", use_container_width=True, on_click=mudar_pagina, args=("🔍 Visualizar Estoque",))
             st.button("📑 Auditoria de Colaboradores", use_container_width=True, on_click=mudar_pagina, args=("📑 Auditoria de Colaboradores",))
             st.button("📈 Relatórios", use_container_width=True, on_click=mudar_pagina, args=("📈 Relatórios",))
-
+        
+        # -- BOTÃO DE SAIR --
+        st.sidebar.markdown("---")
         if st.sidebar.button("Sair"):
             st.session_state.logged_in = False
             st.session_state.username = ""
