@@ -188,11 +188,9 @@ def carregar():
 
         st.markdown("---")
         for i in range(num_itens):
-            col1, col2, col3 = st.columns([3, 1, 1])
+            col1, col3 = st.columns([2, 1])
             with col1:
                 st.selectbox(f"Insumo #{i+1}", [""] + opcoes_insumo, key=f"saida_insumos_item_nome_{i}_{ri}", disabled=(not opcoes_insumo))
-            with col2:
-                st.text_input(f"Tamanho #{i+1}", placeholder="ÚNICO", key=f"saida_insumos_item_tam_{i}_{ri}")
             with col3:
                 st.number_input(f"Qtd #{i+1}", min_value=1, value=1, key=f"saida_insumos_item_qtd_{i}_{ri}")
         

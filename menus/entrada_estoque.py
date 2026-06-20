@@ -43,15 +43,28 @@ def carregar():
             with col_forn:
                 st.text_input("Fornecedor", key=f"entrada_item_fornecedor_{i}")
 
-            col_tam, col_status, col_qtd, col_valor_un = st.columns(4)
-            with col_tam:
-                st.text_input("Tamanho", placeholder="ÚNICO", key=f"entrada_item_tamanho_{i}")
-            with col_status:
-                st.selectbox("Status", ["NOVO", "HIGIENIZADO"], key=f"entrada_item_status_{i}")
-            with col_qtd:
-                st.number_input("Quantidade", min_value=1, step=1, key=f"entrada_item_quantidade_{i}")
-            with col_valor_un:
-                st.number_input("Valor Unitário (R$)", min_value=0.0, format="%.2f", key=f"entrada_item_valor_unitario_{i}")
+            # Se for INSUMO não mostramos o campo de tamanho (tamanho será 'ÚNICO')
+            if tipo_selecionado == "INSUMO":
+                col_status, col_qtd, col_valor_un = st.columns(3)
+                tamanho_interno = "ÚNICO"
+                with col_status:
+                    status_options = ["NOVO"]
+                    st.selectbox("Status", status_options, key=f"entrada_item_status_{i}")
+                with col_qtd:
+                    st.number_input("Quantidade", min_value=1, step=1, key=f"entrada_item_quantidade_{i}")
+                with col_valor_un:
+                    st.number_input("Valor Unitário (R$)", min_value=0.0, format="%.2f", key=f"entrada_item_valor_unitario_{i}")
+            else:
+                col_tam, col_status, col_qtd, col_valor_un = st.columns(4)
+                with col_tam:
+                    st.text_input("Tamanho", placeholder="ÚNICO", key=f"entrada_item_tamanho_{i}")
+                with col_status:
+                    status_options = ["NOVO", "HIGIENIZADO"]
+                    st.selectbox("Status", status_options, key=f"entrada_item_status_{i}")
+                with col_qtd:
+                    st.number_input("Quantidade", min_value=1, step=1, key=f"entrada_item_quantidade_{i}")
+                with col_valor_un:
+                    st.number_input("Valor Unitário (R$)", min_value=0.0, format="%.2f", key=f"entrada_item_valor_unitario_{i}")
         
         submitted = st.form_submit_button("Registrar Entradas no Estoque")
 
@@ -68,6 +81,9 @@ def carregar():
                 fornecedor = st.session_state.get(f"entrada_item_fornecedor_{i}", "")
                 tamanho = st.session_state.get(f"entrada_item_tamanho_{i}", "")
                 status = st.session_state.get(f"entrada_item_status_{i}", "NOVO")
+                # Se o tipo selecionado for INSUMO, força o status para NOVO
+                if tipo_selecionado == "INSUMO":
+                    status = "NOVO"
                 quantidade = st.session_state.get(f"entrada_item_quantidade_{i}", 1)
                 valor_unitario = st.session_state.get(f"entrada_item_valor_unitario_{i}", 0.0)
                 itens_para_adicionar.append((nome, tamanho, status, fornecedor, quantidade, valor_unitario))
