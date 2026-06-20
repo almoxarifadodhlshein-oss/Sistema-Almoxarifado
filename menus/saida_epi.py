@@ -278,6 +278,7 @@ def carregar():
         if not email_value or email_value == "Nenhum e-mail cadastrado": st.error("Selecione um e-mail válido."); st.stop()
         if not efetivo_value: st.error("O campo 'Efetivo' é obrigatório."); st.stop()
         if not coordenador_value: st.error("O campo 'Coordenador' é obrigatório."); st.stop()
+        if not colaborador_value: st.error("O campo 'Nome Completo' é obrigatório."); st.stop()
 
         if canvas_result.json_data is None or len(canvas_result.json_data.get("objects", [])) == 0:
             st.warning("⚠️ Por favor, colete a assinatura do colaborador antes de salvar.")
